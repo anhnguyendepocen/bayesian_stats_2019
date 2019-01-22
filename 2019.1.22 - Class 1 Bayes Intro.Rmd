@@ -1,0 +1,42 @@
+---
+title: "2019.1.22 - Class 1 Bayesian Stats Intro"
+author: "Michael Weisner"
+date: "1/22/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Syllabus
+### TAs
+Terry and Xiao Ling
+
+### Grading
+Participation in class and online
+
+### Books
+
++ _A Mathematics Course for Political and Social Research_, by Will H. Moore and David A. Siegel, published by Princeton UniversityPress in 2013. Available for free [here](http://site.ebrary.com.ezproxy.cul.columbia.edu/lib/columbia/detail.action%3FdocID%3D10723957). Siegel also has a video course based on this book [here](https://people.duke.edu/~das76/MooSieBook.html).
++ _Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan, Second Edition_, by John Kruschke, published by Elsevier in 2015. Available for free Link, or you can buy it here.
++ _Regression and Other Stories, by Andrew Gelman, Jennifer Hill, and Aki Vehtari_, (to be) published by Cambridge University Pressin 2018. Some chapters will be made available during the semester.
++ _A Student’s Guide to Bayesian Statistics_, by Ben Lambert, published by SAGE in 2018. We will primarily utilize Lambert’s mostlyself-contained [YouTube videos](https://www.youtube.com/watch?v=P_og8H-VkIY&list=PLwJRxp3blEvZ8AKMXOy0fc0cqT61GsKCG), but the underlying book can be read on Kindle.
+
+### Programming
+We will exclusively use R & [Stan](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)
+
+#### Using RStan
+Running code below gets you going and saves a local compiled copy of Stan to the hard drive
+```{r}
+library("rstan") # observe startup messages
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+```
+
+Stan is young but it's a wave we want to ride. It's taking off and making Bayesian statistics much more widely applicable.
+
+
+
+
+
