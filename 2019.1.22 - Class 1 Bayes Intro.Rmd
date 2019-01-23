@@ -36,7 +36,142 @@ rstan_options(auto_write = TRUE)
 
 Stan is young but it's a wave we want to ride. It's taking off and making Bayesian statistics much more widely applicable.
 
+### Helpful Quotes
+
++ Statistics is not math or science but engineering (but you need to know the other two)
++ Advanced courses emphasize engineering, but most scientists never get that far. Stats is like engineering backwards, starting with bridge buildin gand ending with basic physics.
++ Serious trouble begins when scholars move on to conducting innovative research but go beyond their boundaries. We got hydraulic engineers by promoting plumbers.
++ Why aren't tests enough for innovative research? Classical procedures of intro stats tend to be inflexible and fragile. Limited ways to adapt to unique research contexts and fail in unpredictable ways when applied to new contexts.
+
+## Probability
+
+The "basic physics" of stats is probability. It's about uncertainty.
+
+**To be Bayesian, you have to...**
+
++ Know / learn probability theory
+1. Probability theory for discrete random variables
+2. Probability theory for continuous random variables
+3. Probability theory for multivariate random variables
++ Know about computer programming (numerical stability, cancellation, etc)
++ Know about the substance of what you are modeling
++ Be prepared for everyone to disagree with you
+
+## Aristotelian Logic
+
+1. All men are mortal
+2. Socrates is a man
+3. Ergo, Socrates is mortal
+
+There are no interesting applications of deductive logic in the social sciences, the closest is perhaps democratic peace "theory":
+
+1. No two democracies fight a war against each other
+2. Australia and Germany are democracies
+3. Ergo, Australia and Germany will not fight a war against each other
+
+Whether 1 is true depends on how you operationalize "democracy" and "war" so the literature has descended into debates over things like whether a country is a democracy or whether a conflict they were involved in is a war.
+
+A better question is: Why are democracies less likely to fight a war against each other compared to wars involving an autocracy? Some ideas:
+
++ Autocrats can make executive decisions, like military action, with lower repercussions than elected officials.
++ Wars are unpopular generally
++ Democracies became more allied during World War I/II and the Cold War to combat autocratic forces, which developed deeper long-term ties.
+
+### Probability as an Extension of Aristotelian Logic
+Probability is "weaker" than logic because it's not necessarily true or false.
+
+In R, TRUE maps to 1 and FALSE maps to 0, but probabilities are between 0 and 1 to show uncertain beliefs.
+
+An example:
+
+1. Parties of unpopular presidents TEND to lose seats in US midterm elections
+2. Trump is, and is LIKELY to remain, unpopular
+3. Ergo, the Republicans will PROBABLY lose seats in the 2018 elections
+
+**Note**: None of 1, 2, or 3 were guarantee, although 3 seems plausible if you accept both 1 and 2.
+
+Bayesianism is a school of thought that uses probability to describe the degree of belief (with quantified uncertainty) that a proposition is true.
+
+## Uncetainty
+**4 Sources**
+
+1. Uncertainty about aprameters in models
+2. Uncertainty about which model is best
+3. Uncertainty about what to do with the output of the best models
+4. Uncertainty about whether the software works as intended
+
+Bayes use probability to describe their uncertainty in **1** and **2**. The approach links with decision theory, which prescribes **3**. The Stan software does as mcuh as we can to mitigate **4**.
+
+By implication other approahes/software may refer to probability but fail to handle one or more of the above items. These include randomization inference, frequentist inference, supervised learning, and others.
+
+## Introduction to Randomization Inference
+In 1920s, **Fisher** devised a method of inference for experiments where:
+
+1. The only parameter is the Average Treatment Effect (ATE) for the subjects who participate in the experiment.
+2. There is no model to speak of
+3. Hard to say what to do with the ATE due, in part, to generalizeability
+4. The subsequent implementation in software is simple
+
++ There are 705432 ways to assign 11 out of 22 people to treatment
++ The researcher chooses one of them AT RANDOM
++ Randomization of the treatment variable creates the need for probability. 
++ Everything after that randomization has a probability distribution that is conditioned on everything before.
++ Administer the treatment to those in treatment and later measure $Y$
++ Estimated ATE is the diff in mean outcomes between these two groups
+
+**What about the diff in means between the OTHER 705431 ways to divide 22 people into two groups of 11?**
+
+You might anticipate that the way treatment was ACTUALLY assigned would have among the largest differences in means between the two groups but there is some probability that is not true.
+
+If an only if the true treatment effect is zero then the other 705431 differences in means form a probability distribution of estimated ATEs.
+
+The proportion of these 705432 ATE estimates that are _greater_ in magnitude than the actual ATE estimate is the **p-value** of a null hypothesis of no effect.
 
 
+## Frequentist Inference
+Fisher also devised a method of inference for observational data where the goal is to make an inference about a population parameter from a relatively small RANDOM sample from that population.
+
+For example, the British population was about 36 million at the time and the gov might take a sample of 500. There are $e ~= 2.7182818^{6088.1808245}$ ways of doing so.
+
+Data collector schooses one at random and gives the data to the analyst who estimates, for example, the pop mean with the sample mean.
+
+What about the other numerous ways that a sample size of 500 out of 36 million could have been drawn to estimate the population meamn?
+
+The probability distribution of the sample mean estimator over the $e^{6088.1808245}$ ways to draw such a sample can be derived analytically
+
+In the 1930s, **Neyman and Pearson** devised a way of testing 2 point hypotheses about the population mean and popularized the confidence interval estimator.
+
+## More McElreath Quotes (2015, p. 4 & 10)
+Greatest obstacle among students and colleagues is the belief that the proper objective of statistical inference is to test null hypotheses
+
++ Hypotheses aren't models
++ Measurement error prevents deductive falsification
+
+Instead, what researchers need is a set of principles for designing, building, and refining special-purpose statistical procedures. Every major branch of statistical phyilosophy possesses such a unified theory (but not in intro courses...). So there are benefits in rethinking statistical inference as a set of strategies, instead of a set of premade tools.
+
+**3 "Golems"**
+
+1. Bayesian data analysis
+2. Mulltilevel models
+3. Model comparison using information criteria
+
+## Bayesian Inference
+
++ Uncertainty creates the need for probability to describe beliefs
++ You have beliefs about how much the S&P500 will grow by the end of 2019
++ you express your beliefs with a probability distribution,. such as a normal distribution with a mean of +2% and a standard deviation of 5%
++ As more data comes during $2019$, you update your beliefs aboutwhere the S&P500 will be at the end of $2019$ to some new probability distribution
++ Note the data are not, and need not be, a sample or an experiment for you touse probability distributions to describe your beliefs in a rigorous way
+
+## Supervised Learning
++ Suppose there is a dataset of size $N$, which generally is neither anexperiment nor a sample from any well-defined population so Fisher'swork doesn't apply-  There are $\frac{N!}{n!\left(N - n\right)!}$ ways to divide this datasetinto a training dataset of size $n$ and a testing dataset of size $N - n$-  The analyst chooses one split at random, then
+*  chooses parameters to minimize some loss function in the training data
+*  uses them to predict the outcome in the testing data
+*  compares the predictive accuracy to other models
++ What about the other $-1 + \frac{N!}{n!\left(N - n\right)!}$ OTHER ways todivide a dataset into training and testing, which could be used to generate aprobability distribution over a measure of predictive accuracy.Data miners often do not bother.
++ Most (but not all) supervised learning ignores all forms of uncertainty
+
+## Key Points
+What's random in Bayes? It's your beliefs about the unknown. Take functions of unknown to average over functions of posterior draws of $\theta$ to conclude with decision/action.
 
 
