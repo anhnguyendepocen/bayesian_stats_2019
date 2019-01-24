@@ -30,7 +30,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Sample Space
 The sample space, denoted $\Omega$, si the set of all possible outcomes of an observable random variable
 
-LEARN GREEK ALPHABET BETTER!
+LEARN GREEK ALPHABET BETTER! Look [here](https://www.calvin.edu/~rpruim/courses/s341/S17/from-class/MathinRmd.html)
+
+$\alpha$ and $A$ = alpha
+$\beta$ and $B$ = beta
+$\gamma$ and $\Gamma$ = gamma
+$\delta$ and $\Delta$ = delta
+
+
+
 
 Six sided dice has $\Omega$ of 1-6
 
@@ -122,6 +130,130 @@ Formally, A & B are independent if $Pr(A|B) = PR(A)$ and $Pr(B|A) = Pr(B)$. Thus
 + Two rolls in diff frames are independent
 + Rolls by two diff people are independent regardless of whether they are in the same frame
 
+We ignore small things that could be dependent, like maybe a lane is warped to make people on it strike more. These sort of small factors could impact but we can't quantify it.
 
+
+What are the odds of a Turkey? Three Strikes in a row...
+
+Multiple 0.384 (the propbability of getting a strike) for each time
+
+Aka $0.384 * 0.384 * 0.384$ or $0.384^3$
+
+
+What about 9 pins on first roll and 1 pin on second? --> The General Multiplication Rule!
+
+$Pr(9) * Pr(1)$ with the condition that 9 pints were knocked down...
+
+$Pr(x)$
+
+Need to fix...
+```{r}
+joint_Pr <- matrix(0, nrow = length(Omega), ncol = length(Omega))
+rownames(joint_Pr) <- colnames(joint_Pr) <- as.character(Omega)
+for (x1 in Omega) {
+  Pr_x1 <- Pr(x1)
+  for (x2 in 0:(10-x1)) {
+    joint_Pr[x1 + 1, x2 + 1] <- Pr_x1 * Pr(x2, 10 - x1)
+  }
+}
+sum(joint_Pr)
+joint_Pr
+```
+
+## Composition
+Stochastic Analogue to the General Multiplication Rule is composition
+Randomly draw a realization of $x_1$ and use that realization of $x_1$ when randomly drawing $x_2$ from its conditional distribution
+
+```{r}
+S <- 10^6; yes <- 0
+for (s in 1:S) {
+  x1 <- sample(Omega, size = 1, prob = Pr(Omega))
+  x2 <- sample(0:(10 - x1), size = 1, prob = Pr(0:(10 - x1), n = 10 - x1))
+if (x1 == 9 & x2 == 1) yes <- yes + 1
+}
+c(simulated = yes / S, truth = joint_Pr["9", "1"])
+```
+
+Aristotelian Logic to Probability of Alternatives
+What is the probability you fail to get a strike on this frame or the next one?
+$1 - 0.384 = 0.616$ is the probability of NOT getting a strike.
+
+**General Addition Rule**
+
+$\cup$ is what we mean for OR:
+$Pr(A \cup B) = Pr(A) + Pr(B) - Pr(A \cap B)$
+
+Basically the probability of A + the probability of B subtracting the probability of A & B.
+
+If $Pr(A \cup B) = 0$, then $A$ and $B$ are mutually exclusive (disjoint)
+
+
+What is probability that $X_2 = 9$
+
+Means first roll ($X_1$) must be either a 0 or 1, then $X_2$ could be 9...
+
+so we get 0.00019 + 0.0003 + 0.118..
+
+```{r}
+round(rbind(Pr_X1 = Pr(Omega), margin1 = rowSums(joint_Pr), margin2 = colSums(joint_Pr)), 3)
+```
+
+
+### Marginal Distribution of Second Roll in Bowling
+
+look at math...
+
+
+## Marginal, Conditional, and Joint Probabilities
+
++ To compose a joint (in this case bivariate) probability, **MULTIPLY** a marginal probability by a conditional probability
++ To decompose a joint (in this case bivariate) probability, **ADD** the relevant joint probabilities to obtain a marginal probability
++ To obtain conditional probability, DIVIDE the relevant joint porbability by the relevant marginal probability since...
+
+$$
+
+Pr(A \cap B) = Pr(B) * Pr(A | B) = Pr(A) * Pr(B | A)
+
+$$
+
+$$
+
+Pr(A | B) = (Pr(A) * \frac {Pr(B | A))} {Pr(B)} if Pr(B) > 0
+
+$$
+
+**This is Bayes rule!**
+
+
+So, What is $Pr(X_1 = 3 | X_2 = 4, n = 10)$? Kind of a missing data problem. We know 4 were knocked down on second but didn't see how many were knocked down on first...
+
+Prob of A (3 in first) + prob of B in the second - prob of X_2 > 4
+
+
+??
+
+Take joint probability table column of 4 and divide by 1 - sum of probability of all non 4 outcomes. That's also 1 - 1 - probability of 4.
+
+```{r}
+joint_Pr["3", "4"] / sum(joint_Pr[, "4"])
+```
+
+Basically Bayesians generalize this by taking A to be "beliefs about whatever you do not know" and B to be whatever you do know.
+
+Frequentists accept Bayes Rule but object
+
+## Superbowl Probability
+
+What is the probability that the Patriots beat the Rams next Sunday?
+
+Frequentists can't answer this question and argue it shouldn't be answered subjectively as it can only occur once...
+
+One way to understand it from a Bayes perspective is via betting: Do you want to risk \$6 to gain \$4? If so, you believe the probability the Patriots win is greater than 0.6
+
+$$
+Odds(A) = \frac {Pr(A)} {1 - Pr(A)}
+$$
+
+Once you commit to a probability, the decision to bet is straightforward.
 
 
