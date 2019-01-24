@@ -1,0 +1,127 @@
+---
+title: "2019.1.24 - Class 2 Bayesian Statistics"
+author: "Michael Weisner"
+date: "1/24/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Probability with Discrete Variables
+
+### Sets
+
++ A set is a collection of elements
++ Elements can be intervals and or isolated elements
++ One often-used set is the set of a real numbers
++ Loosely, real numbers have decimal points
++ Integers are a subset of all real numbers, $ℝ$, denoted $Z$, where the decimal places are .000...
++ Often negative numbers are excluded, eg $ℝ_+$
++ Sets can be categorical
++ In this session we are going to focus on some subset of $Z$
+
+### Random Variables
+
++ A function is a rule that uniquely maps each element of an input set to some element of an output set
++ A random variable is a FUNCTION from the sample space, $\Omega$, to some subset of $ℝ$ with a probability-based rule
+
+### Sample Space
+The sample space, denoted $\Omega$, si the set of all possible outcomes of an observable random variable
+
+LEARN GREEK ALPHABET BETTER!
+
+Six sided dice has $\Omega$ of 1-6
+
+Capital letters, X, indicates a random var and it's lower case indicates a realization of X.
+
+
+## First Roll in Bowling
+
++ Each frame in bowling starts with $n = 10$ pins
++ You get 2 rolls per frame to knock down pins
++ First roll's $\Omega$ is 0-10
++ | is read as "given"
+
+Hohn (2009) discussed distributions of the probability of knocking down $X \ge 0$ out of $n \ge X$ pins including $Pr(x | n) = F_x / (-1 + F_{x + 2})$ where $F_x$ is the xth Fibonacci number, ie $F_0 = 1$, $F_1 = 1$, and otherwise $F_x = F_{x-1} + F_{x-2}$
+
+First 13 fibonacci numbers are 1, 1, 2, 3, 45, 8, 13, 21, 34, 55, 89, 144, and 233
+
+## Bowling Function Example
+```{r source}
+# source("https://tinyurl.com/y9ubz73j")
+```
+```{r Bowling}
+# computes the x-th Fibonacci number without recursion and with vectorization
+set.seed(2019124)
+F <- function(x) {
+  stopifnot(is.numeric(x), all(x == as.integer(x)))
+  sqrt_5 <- sqrt(5) # defined once, used twice
+  golden_ratio <- (1 + sqrt_5) / 2 # appears with fibonacci sequence
+  return(round(golden_ratio ^ (x + 1) / sqrt_5))
+}
+# probability of knocking down x out of n pins
+Pr <- function(x, n = 10) return(ifelse(x > n, 0, F(x) / (-1 + F(n + 2))))
+
+Omega <- 0:10 # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+round(c(Pr(Omega), total = sum(Pr(Omega))), digits = 3)
+
+x <- sample(Omega, size = 1, prob = Pr(Omega)) # realization of random variable
+```
+
+Above shows the probability of scoring 0 - 10 on the first roll based on the fibonacci sequence
+
+x is a sample of those distributions
+```{r}
+x
+```
+
+What about both rolls?
+
+Define $X_1$ and $X_2$ to respectively be the number of pins knocked down on the first and second rolls of a frame of bowling. What function yields the probability of knocking down $x_2$ pins on your second roll?
+
+$$
+Pr(x_2 | X_1 = x_1, n = 10) = F_ ???
+$$
+
+```{r}
+
+```
+
+
+$$PR(x_2 | X_1 = x_1, n = 10)$$ is a **CONDITIONAL** probability
+
+Conditioning is operational...
+
+
+## From Aristotelian Logic to Bivariate Probability
+
+In R, TRUE = 1 and FALSE = 0 when doing arithmetic operations
+
+```{r}
+(TRUE & TRUE) == (TRUE * TRUE)
+```
+
+```{r}
+(TRUE & FALSE) == (TRUE * FALSE)
+```
+
+Can generatlize to probabilities on the $[0,1]$ interval to compute the probability that two or more propostions are simultaneously true
+
+$\cap$ reads as "and" **GENERAL MULTIPLICATION RULE:**
+$$Pr(A \cap B) = PR(B) * Pr(A | B) = Pr(A) * Pr(B | A)$$
+
+Loosely, A & B are independent propositions if  A being true or false tells us nothing about hte probability that B is true and vice versa...
+
+Formally, A & B are independent if $Pr(A|B) = PR(A)$ and $Pr(B|A) = Pr(B)$. Thus, $Pr(A \cap B) = Pr(A) * Pr(B)$
+
+**Reasonable Assumptions:**
+
++ Two rolls in the same frame are not independent
++ Two rolls in diff frames are independent
++ Rolls by two diff people are independent regardless of whether they are in the same frame
+
+
+
+
