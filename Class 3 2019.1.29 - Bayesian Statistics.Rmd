@@ -1,0 +1,209 @@
+---
+title: "2019.1.29 - Class 3 Bayesian Statistics"
+author: "Michael Weisner"
+date: "1/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Probability with Discrete Random Variables
+
+
+
+```{r}
+source("https://tinyurl.com/y93srfmp") # runs the things to generate the fiboncci sequence?
+```
+
+Check out the bowling.R file
+
+```{r}
+round(Pr(Omega), digits = 3) # what's the mode, median, and expectation of X1?
+```
+
+What's the **MODE**? Mode is most commonly recurring number, which in this case is 10 (0.384). It's higher probability means it's more frequent.
+
+What's the **MEDIAN**? Median occurs at 50%, Median occurs at smallest element Omega such that AT LEAST half of the cumulative probability is less than or equalt o that element (9 in this case). You can see in the cumulative sum below:
+
+```{r}
+cumsum(round(Pr(Omega), digits = 3))
+```
+
+What is the **EXPECTATION** of the number of pins to be knocked down on the first roll?
+
+Expectation of a discrete random variable X in statistics/probability is defined as..
+
+$$
+EX = \sum_{x \in \Omega} [x * Pr(x)] \equiv \mu
+$$
+
+Expectation is a probability-weighted sum (8.431 here) - which is obviously impossible.
+
+## The Average is an Estimator of an Expectation
+
+Since $\mu - \Sigma_{y \in \Omega} y Pr(y$, if we ESTIMATE $Pr(y)$ with $ \frac {1}{n} \sum_{n = 1}^N |(y_n = y)$
+
+If we draw ~y from its probability distribution S times, as S goes to infinity we'll get an approximation of the Expectation.
+
+```{r}
+c(exact = sum(Omega * Pr(Omega)),
+  approx = mean(sample(Omega, size = 10 ^ 8, replace = TRUE, prob = Pr(Omega))))
+```
+
+### Practice Problems
+Calculate expectation of the second roll given that $x_1 = 7$ pins were knocked own on the first roll?
+
+1. Get conditional expectation of remaining pins (the possible subspace of pins)
+2. And add up the probabilities?
+
+```{r}
+sum(Omega * Pr(Omega, n = 10 - 7))
+```
+
+It's 2 because the non-zero conditional probabilities are $\frac {1}{7}$, $\frac {1}{7}$, $\frac {2}{7}$, $\frac {3}{7}$
+
+
+How would we calculate the expectation of the second roll i a frame of bowling irrespective of the first roll?
+
+
+Take joint probability table, sum of the column of the number of pins in the second roll.
+
+
+## Expectation is a Linear Operator
+What is the expectation of cX where c is any constant?
+ 
+Answer: $c \mu$ 
+
+If we multiplied the fist and second rolls
+
+$\mathbb{E}[X_1 + X_2] = \sum_x * \sum_y xPr(x \cap y) + \sum_y * \sum_x y(Pr(x \cap y)$
+
+OR
+
+Expectation of X + Expectation of Y
+
+**Expectation of a sum is the sum of the expectations.**
+
+```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1; sum(joint_Pr * S)
+```
+
+
+## Expectations of Functions of Discrete Random Variables
+Let g(X) be a function of a discrete random var whose expectation is...
+
+$$
+\mathbb{E}g(X) = \sum_{x \in \Omega} [g (x)] \neq g(\mathbb{E}X)
+$$
+
+If $g(X) = (X - \mu)^2$, the **VARIANCE** of X is defined as $\mathbb{E}|(X - \mu)^2 = \sigma^2$. Show that $\sigma^2 = \mathbb{E}[X^2] - \mu*2 $ by expanding $(X - \mu)^2 - X^2 -2X\mu + \mu^2$
+
+????
+
+How should we know this from the book?
+
+????
+
+$$
+\mathbb{E}(X-\mu)^2 = \sum_x Pr(X) (X^2 - 2X\mu + \mu^2)
+$$
+
+$$
+\sum_x Pr(X) = \mathbb{E}[x]
+$$
+Somehow distribute???
+
+```{r}
+
+```
+
+## Expected Utility
+
+Let's maximize EXPECTED utility:
+
+1. Enumerate D possible decisions ${d_1, d_2, ... , d_D}$ that are under consideration
+2. Define a utility function g(d, ...) that also depends on unknown (and maybe additional known quantities
+3. Obtain / update your cponditional probability distribution for all the unknowns given all the knowns
+4. Evaluate $\mathbb{E}g(d, ...)$ for each of the $D$ decisions
+5. Choose the decision that has the highest value in (4)
+
+This is very intuitive and useful procedure but you have to use Bayes Rule in (3)
+Also, whoever is deciding has to specify (1) and (2)
+
+
+So... figure out how to weight profit (a common application of utility) by using Bayes Rule by usin Stan?
+
+Most businesses won't use this. They like the idea but don't understand it and it's hard to argue.
+
+Standard business decisions aren't usually made with these kinds of procedures...
+
+## Iterated Expecations
+The expectation of a conditional expectation is a marginal expectation, i.e.
+
+$$
+\begin{eqnarray*}\mathbb{E}_X\left[\mathbb{E}\left[\left.Y\right|X = x\right]\right] & = &\mathbb{E}_X\left[\sum_{y \in \Omega_Y} y\Pr\left(\left.y\right|X = x\right)\right] \\& = & \sum_{x \in \Omega_X} \Pr\left(X = x\right) \sum_{y \in \Omega_Y} y\Pr\left(\left.y\right|X = x\right) \\& = & \sum_{x \in \Omega_Y} \sum_{y \in \Omega_X} y\Pr\left(\left.y\right|X = x\right)\Pr\left(X = x\right) \\& = & \sum_{x \in \Omega_Y} \sum_{y \in \Omega_X} y \Pr\left(x \bigcap y\right) =\sum_{y \in \Omega_Y} y \sum_{x \in \Omega_X} \Pr\left(x \bigcap y\right) \\& = & \sum_{y \in \Omega_Y} y \Pr\left(y\right) = \mathbb{E}Y = \mu_Y\end{eqnarray*}\
+$$
+
+So following this... the iterated expecation is the expectation of X * Expectation of Y ($\mu \gamma$)
+
+## Covariance and Correlation
+
+### COVARIANCE
+If $g\left(X,Y\right)=\left(X-\mu_X\right)\left(Y-\mu_Y\right)$, their COVARIANCE isdefined as
+$$\mathbb{E}g\left(X,Y\right) =\sum_{x\in\Omega_X}\sum_{y\in\Omega_Y}\left(x - \mu_X\right)\left(y - \mu_Y\right)\Pr\left(x \bigcap y\right)$$
+
+### CORRELATION
+
+-  If $g\left(X,Y\right)=\frac{X-\mu_X}{\sigma_X}\times\frac{Y-\mu_Y}{\sigma_Y}$, their CORRELATION is defined as
+$$\mathbb{E}g\left(X,Y\right) =\sum_{x\in\Omega_X}\sum_{y\in\Omega_Y}\frac{x - \mu_X}{\sigma_X}\frac{y - \mu_Y}{\sigma_Y}\Pr\left(x \bigcap y\right) =\\\frac{1}{\sigma_X \sigma_Y}\sum_{x\in\Omega_X}\sum_{y\in\Omega_Y}\left(x - \mu_X\right)\left(y - \mu_Y\right)\Pr\left(x \bigcap y\right) =\frac{\mathrm{Cov}\left(X,Y\right)}{\sigma_X \sigma_Y} = \rho$$
+-  Covariance and correlation measure LINEAR dependence
+-  Is $\rho\gtreqqless0$ for 2 rolls in the same frame of bowling?
+
+
+The correlation, rho ($\rho$)...
+
+There is a linear relationship between the number of pins you knock down on the first roll (0:10) and the available number of pins on the second roll ($10-X_1$), so assuming you're a decent bowler there will be a negative correlation of the second throw because a good bowler will knock down more pins on their first?
+
+### Correlation Calculation
+```{r}
+Pr_X2 <- colSums(joint_Pr) # marginal probabilities from last week
+EX2 <- sum(Omega * Pr_X2)  # definition of marginal expectation
+Pr_X1 <- Pr(Omega)
+EX1 <- sum(Omega * Pr_X1)
+covariance <- 0
+for (x1 in Omega) {
+  for (x2 in 0:(10 - x1))
+  covariance <- covariance + (x1 - EX1) * (x2 - EX2) * joint_Pr[x1 + 1, x2 + 1]
+}
+Var_X1 <- sum( (Omega - EX1) ^ 2 * Pr_X1 )
+Var_X2 <- sum( (Omega - EX2) ^ 2 * Pr_X2 )
+correlation <- covariance / sqrt(Var_X1 * Var_X2)
+correlation
+```
+
+### Variance of a Sum
+
+Variance of a sum is equal to the sum of the variance plus 2 * the covariance.
+
+## Bernoulli Distribution
+
++ $Pr(X = 1 | n = 1) - ... = \frac {1}{2}$ is one way to assign the probability of knocking down a single pin but is not the most general way
++ The Bernoulli distribution over $\Omega = [0,1]$ is $Pr(X = 1 | \pi) = \pi \in [0,1]$ and thus $Pr(X = 0 | pi) = 1 - \\pi$
+
++ Bernoulli is the expression of a Bernoulli random variable? 
++ What is the expression is the variance of aBernoulli random variable?
+
+
+$$
+(0-\pi)^2 (1-\pi) + (1-\pi)^2\pi
+$$
+
+
+
+
+
+
+
+

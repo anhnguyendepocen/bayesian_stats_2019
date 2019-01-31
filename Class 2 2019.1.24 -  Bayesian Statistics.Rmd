@@ -152,13 +152,17 @@ joint_Pr <- matrix(0, nrow = length(Omega), ncol = length(Omega))
 rownames(joint_Pr) <- colnames(joint_Pr) <- as.character(Omega)
 for (x1 in Omega) {
   Pr_x1 <- Pr(x1)
-  for (x2 in 0:(10-x1)) {
+  for (x2 in 0:(10 - x1))
     joint_Pr[x1 + 1, x2 + 1] <- Pr_x1 * Pr(x2, 10 - x1)
-  }
 }
-sum(joint_Pr)
+sum(joint_Pr) # that sums to 1
+```
+
+```{r}
 joint_Pr
 ```
+
+
 
 ## Composition
 Stochastic Analogue to the General Multiplication Rule is composition
