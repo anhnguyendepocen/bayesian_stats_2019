@@ -9,22 +9,226 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Probability Distributions for Discrete Random Variables
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Bernoulli Distribution
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Bernoulli distribution over $\Omega = {0,1}$ whose Probability Mass Function (PMF) is $Pr(x|\pi)^{1-x}$ which depends on a possibly unknown probability parameter $\pi \in [0,1]$
 
-```{r cars}
-summary(cars)
+BASICALLY Bernoulli Disributions are for when the outcome can be 0 or 1 (binary success or failure)
+
+$$
+\mathbb{E}X = 0 * (1- \pi) + 1 * \pi = \pi
+$$
+
+$$
+\mathbb{E}(X-\pi)^2 = \mathbb{E}[X^2] - (\mathbb{E}X)^2 = \mathbb{E}X - \pi^2 = \pi - \pi^2 = \pi(1-\pi)
+$$
+
+You could write a model where pi is a function of predictors for each observation as in $\pi(z) = \frac {1}{1+e^{???}}$ for a logit model
+
+## Binomial Distribution
+
+Related to Bernoulli
+
+A Bimnomial random variable can be defined as the sum of n INDEPENDENT Bernoulli random variables with the same $\pi$. What is Omega in this case? --> 0 to N, up to N successes.
+
+What is an expression for the expectation of a Binomial Random Variable?
+
+$\pi * N$ which is the sum of the expectations, as each Bernoulli distribution has an expectation of $\pi$
+
+What is an expression for the variance of a Binomial Random Variable?
+
+Covariance is 0, so we don't have to worry about $2 * $covariance, so it's $N * \pi * (N-\pi)$ ?
+
+PMF Pr(x|\pi, n = 3)
+
+Cases: 
++ All succeed $\pi^3$ or all fail, $(1-pi)^3$
++ 1 Succeeds and 2 fail $\pi^1(1-\pi)^2$ but there are 3 ways that could happen
++ 2 succeed and 1 fail $\pi^2(1-\pi)^2$ but there are 3 ways that could happen
+
+
+
+So 
+
+
+$Pr(x|n, \pi) =  {n \choose x} = \frac {n?} {X^2}$
+
+FIX ABOVE
+
+## Back to Bowling
+
+Why is binomial distribution with n = 10 inappropriate for the first roll of a frame of bowling?
+
+1. They are not independent spatially
+2. Pins in middle might have higher probability of being knocked down than edges
+
+BUT
+
+A Bernoulli distribution could be used for whether or not a person has a strike.
+
+Point is, we can reframe events as success/failure events and use a Bernoulli distribution.
+
+SO
+
+if X_i = I[ pin i is knocked down] and \pi_i is the probability in the i-th Bernoulli distribution
+
+Concpetually:
+
+
+$$
+
+Pr(x_1 | \pi_1) \prod_{i=2}^{10} Pr(x_1|\pi_1, X_1 = x_1, X_2 ... X_i-1 = x_{i-1})
+
+$$
+
+
+The 2 given the 1st is a bivarite, the 3 given the 2 is a trivariate, the 4 given the 3 is a four-variate... the 10th pin given the 9th pin is a ten-variate Bernoulli distribution
+
+Add them all up to get the joint probability on the roll.
+
+
+## Poisson Distribution for Counts
+
+Let n --> $\infty$ and let $\pi$ --> $0$ such that $\mu = n\pi$ remains fixed and finite. What happens to the binomial PMF, $Pr(x|n,\pi) = {n \choose x}\pi^X(1-\pi)^{n-x}$?
+
+$1 * \frac {\mu^X} {X^n}$
+
+
+Thus... $Pr(x|\mu) = \frac {\mu^xe^{-\mu}}{X^?}$
+
+Expectation of a Poisson is $\mu$ but why is the variance also $\mu$?
+
+The variance of a binomial variable is $N*\pi*(1-\pi)$ which is $\mu * (1-\pi)$ but as $\pi$ goes to 0 then it because $mu * 1$ which is $\mu$
+
+This is coincidental. Mean and variance are totally different.
+
+## Paramterized Bowling
+
+Bell numbers are defined as $\mathcal{B}_0 = 1$, $\mathcal{B}_1 = 1$, and else$\mathcal{B}_{n + 1} = \sum_{k = 0}^n {n \choose k} \mathcal{B}_k$
+
+-  Let $\Pr\left(\left.x\right|n, \Upsilon\right) = \frac{{n + \Upsilon \choose x + \Upsilon} \mathcal{B}_{x + \Upsilon}}{\mathcal{B}_{n + 1 + \Upsilon} \ - \sum_{k = 0}^{\Upsilon - 1} {n + \Upsilon \choose k} \mathcal{B}_k}$ where$\Upsilon \in \{0,\mathbb{N}_+\} = \Theta$ is an unknown
+-  Use a Poisson distribution with expectation $\mu$ to represent beliefs about $\Upsilon$
+
+```{r, message = FALSE}
+B <- Vectorize(memoise::memoise(numbers::bell)) # makes it go faster
+Pr <- function(x, n = 10, Upsilon = 0) { # probability of knocking down x out of n pins
+  stopifnot(length(n) == 1, is.numeric(x), all(x == as.integer(x)))
+  numer <- B(x + Upsilon) * choose(n + Upsilon, x + Upsilon)
+  denom <- B(n + 1 + Upsilon) # ^^^ choose(n, k) is n! / (k! * (n - k)!)
+  if(Upsilon > 0) 
+    denom <- denom -sum(choose(n + Upsilon, 0:(Upsilon - 1)) * B(0:(Upsilon - 1)))
+  return(ifelse(x > n, 0, numer / denom))
+  }
 ```
 
-## Including Plots
+How to select $\mu$ in the Poisson Prior?
 
-You can also embed plots, for example:
+Take expectation of first roll and follow Poisson curve to select $\Upsilon$
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+## Using Bayes RUle with Bowling Data
+
+```{r}
+frames <- cbind(x_1 = c(9, 8, 10, 8, 7, 10, 9, 6, 9),
+                x_2 = c(1, 1, 0, 2, 2, 0, 0, 3, 0))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Supposed that you observe the first J= 9 frames of bowling on the same person. Your posterior beliefs about $\Upsilon$ are given by...
+
+
+Poisson PMF in case of 9 indepdendent frames... marginal on first roll x conditional on second for each frame then multiply each independent frame together to get the joint probability of what happened for all 9 frames...
+
+
+
+$$\Pr\left(\left.\Upsilon\right|x_{1,1},x_{1,2},\dots,x_{J,1},x_{J,2},\mu\right) =\frac{\Pr\left(\left.\Upsilon\right|\mu\right)
+\Pr\left(\left.x_{1,1},x_{1,2},\dots,x_{J,1},x_{J,2}\right|\Upsilon\right)}{\Pr\left(x_{1,1},x_{1,2},\dots,x_{J,1},x_{J,2}\right)}$$
+
+$\Pr\left(\left.\Upsilon\right|\mu\right) = \frac{\mu^\Upsilon e^{-\mu}}{\Upsilon!}$is the PMF for a Poisson distribution
+
+
+## Denominator of Bayes Rule
+
+- $\Pr\left(x_{1,1},x_{1,2},\dots,x_{J,1},x_{J,2}\right) = \mathbb{E}g\left(\Upsilon\right)$
+  w.r.t. the prior PMF $\Pr\left(\left.\Upsilon\right|\mu\right)$,
+  where $g\left(\Upsilon\right) = \Pr\left(\left.x_{1,1},x_{1,2},\dots,x_{9,1},x_{9,2}\right|\Upsilon\right)$.
+  $g\left(\Upsilon\right)$ called the LIKELIHOOD function of $\Upsilon$ (evaluated at the observed data)
+  
+- The expected likelihood can be computed in this case as
+$$\mathbb{E}g\left(\Upsilon\right) = 
+\sum_{i=0}^\infty \Pr\left(\left.i\right|\mu\right)
+\Pr\left(\left.x_{1,1},x_{1,2},\dots,x_{J,1},x_{J,2}\right|\Upsilon = i\right) =\\
+\sum_{i=0}^\infty \frac{\mu^{i}e^{-\mu}}{i!}\prod_{j=1}^J
+\Pr\left(\left.x_{j,1}\right|n = 10, \Upsilon = i\right)
+\Pr\left(\left.x_{j,2}\right|n=10-x_{j,1}, \Upsilon = i\right)$$
+  
+- In practice, when evaluating an infinite sum we just stop once the terms get close enough to zero
+
+
+## Calculating Posterior Probabilities in R
+
+```{r, post, cache = TRUE, warning = FALSE}
+mu <- 100                 # for example, can be any positive real number
+Theta <- 0:207            # 207 is the biggest a laptop can handle
+prior <- dpois(Theta, mu) # dpois() is the Poisson PMF
+numer <- prior * sapply(Theta, FUN = function(i) { # sapply applies the given function
+  J <- nrow(frames)                                # to each element of the first argument
+  Pr_game <- Pr(frames[ , "x_1"], n = 10, Upsilon = i) * sapply(1:J, FUN = function(j)
+             Pr(frames[j, "x_2"], n = 10 - frames[j, "x_1"], Upsilon = i))
+  prod(Pr_game)
+})
+post <- numer / sum(numer) # normalize it by dividing numer by the sum of it so everything adds up to 1
+```
+```{r, eval = FALSE}
+barplot(prior, names.arg = Theta, col = 2, ylim = range(post))
+barplot(post, names.arg = Theta, col = 3)
+```
+
+## Comparison of Prior and Posterior Probabilities
+
+```{r, echo = FALSE}
+par(mfrow = 2:1, mar = c(4, 4, 1, 1), las = 1)
+barplot(prior, names.arg = Theta, col = 2, xlim = c(80, 160), ylim = range(post),
+        ylab = "Probability", xlab = expression(Upsilon1))
+legend("topleft", legend = "Prior", lty = 1, col = 2, bg = "lightgrey")
+barplot(post, names.arg = Theta, col = 3, xlim = c(80, 160),
+        ylab = "Probability", xlab = expression(Upsilon1))
+legend("topleft", legend = "Posterior", lty = 1, col = 3, bg = "lightgrey")
+```
+
+## Hypergeometric Distribution
+
+- The binomial distribution corresponds to sampling WITH replacement
+- The hypergeometric distribution corresponds to sampling WITHOUT replacement and
+  has PMF 
+  $$ 
+  \Pr\left(\left.x\right|N,K,n\right) =
+  \frac{{K \choose x}{N - K \choose n - x}}{{N \choose n}}
+  $$ 
+  where
+  
+    - $N$ is the (finite) size of the set being drawn from
+    - $K$ is the number of successes in that finite set
+    - $n$ is the number of times you draw without replacement
+    
+What is the probability of drawing two cards from a deck with the same value.
+
+52 cards in a deck, 4 of each value.
+
+So $(4/52 * 3/51) = \frac {1}{221}$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
