@@ -1,0 +1,191 @@
+---
+title: "GR5065 Assignment 1"
+author: "Michael Weisner"
+---
+
+# Bowling Revisted
+
+<!-- This is a chunk of R code that gets executed when you "knit" an RMarkdown file -->
+<!-- into a HTML or PDF file. You can add other R chunks by clickin on the Insert -->
+<!-- menu at the top right. Fill in the answers in the corresponding sections below. -->
+
+```{r}
+# computes the x-th Fibonacci number without recursion and with vectorization
+F <- function(x) {
+  stopifnot(is.numeric(x), all(x == as.integer(x)))
+  sqrt_5 <- sqrt(5) # defined once, used twice
+  golden_ratio <- (1 + sqrt_5) / 2
+  return(round(golden_ratio ^ (x + 1) / sqrt_5))
+}
+
+# probability of knocking down x out of n pins
+Pr <- function(x, n = 10) return(ifelse(x > n, 0, (F(x) ^ 2) / (F(n) * F(n + 1))))
+
+Omega <- 0:10 # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 is the sample space
+```
+
+## Admissibility
+
+We know that a Probability Mass Function is admissible because we are dealing with discrete random variables, each with a probability between 0 and 1, and with a cumulative sum of the probablities being 1.
+
+The individiual probabilities of each pin (0:10) are as follows:
+```{r}
+round(Pr(Omega), digits = 3) 
+```
+
+The cumulative probabilities for each pin is as follows:
+```{r}
+round(cumsum(Pr(Omega)), digits = 3)
+```
+
+## Three Cases
+
+```{r}
+joint_Pr <- matrix(0, nrow = 11, ncol = 11)
+rownames(joint_Pr) <- colnames(joint_Pr) <- as.character(Omega)
+for (x1 in Omega) {
+  Pr_x1 <- Pr(x1, n = 10)
+  for (x2 in 0:(10 - x1)) {
+    joint_Pr[x1 + 1, x2 + 1] <- Pr_x1 * Pr(x2, n = 10 - x1)
+  }
+}
+```
+
+
+1. The probability of rolling a strike on the first roll of a frame is 0.6181 (as given by the rounded probability of Omega below for hitting 10 pins)
+
+```{r}
+round(Pr(Omega), digits = 4)
+```
+
+2. The probability of a spare is a bit more complicated. We need to calculate the probability of each spare combination (0 & 10, 1 & 9, 2 & 8, 3 & 7, 4 & 6, 5 & 5, 6 & 4, 7 & 3, 8 & 2, and 9 & 1).
+
+Using the joint_Pr below, we can see the probability of each spare combination (with the first roll represented by the row and second roll by the column). As each of these combinations are independent, we can get the probability of rolling any spare combination by adding these values. 
+
+```{r}
+round(joint_Pr, digits = 5)
+```
+
+Let's create a matrix with only the spare possibilities, so dropping the row where we can roll 10 first and dropping the column where we can roll 0 second, since that can only happen in a strike.
+```{r}
+spares <- joint_Pr[1:10, 2:11] # technically not necessary
+round(spares, digits = 5)
+```
+
+Now let's add up the diagonals from bottom to top:
+```{r}
+round(sum(spares[10, 1], spares[9, 2], spares[8, 3], spares[7, 4], spares[6, 5], spares[5, 6], spares[4, 7], spares[3, 8], spares[2, 9], spares[1, 10]), digits = 4) # I couldn't think of an elegant way to do this
+```
+
+So the probability of rolling a spare is 0.212
+
+3.The probability of not getting a strike nor a spare is simply 1 minus the probability of a strike and the probability of a spare, or...
+```{r}
+1 - 0.6181 - 0.2120
+```
+
+0.1699 is the probability of bowling neither a strike nor a spare based on this distribution.
+
+## Conditional Expectation
+
+The expectation of a sum is the sum of the expectations, in this case the expected $x_1 + x_2$.
+
+If we were simply calculating the expected number of pins, then we would calculate the expectation by summing the probabilities of each of the viable frame combination:
+
+```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
+sum(joint_Pr * S)
+```
+
+
+But in this case, a spare and strike being non-viable. We can remove those combinations from our sample space like so: 
+
+```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
+S <- ifelse(S >= 10, 0, S) # makes combinations of 10, which are all strike and spare combos, 0
+S
+```
+
+And then we can find the sum using the original joint_Pr probabilities like so:
+```{r}
+sum(joint_Pr * S)
+```
+
+Which means the expected frame if we roll a non-strike and a non-spare is approximately 1.502 pins.
+
+## Tenth Frame
+
+**NEED TO COMPLETE**
+
+
+**CHECK ANSWER (ADAPT)**
+
+If $x_1$ < 10, $x_2$ can be 0:(10-$x_1$) and $x_3$ does not exist and must therefore be 0.
+If $x_1$ == 10, $x_2$ can be 0:9 and $x_3$ can be 0:(10-$x_2$)
+If $x_1$ == 10 and $x_2$ == 10 then $x_3$ can be 0:10
+
+Total number of possible pins is 30; $x_1 = 10 + x_2 = 10 + x_3 = 10$
+Minimum number of possible pins is 0; $x_1 = 0 + x_2 = 0 + x_3 = 0$
+If $x_1 = 10$,
+
+```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
+S
+```
+
+```{r}
+S <- 10^6; yes <- 0
+for (s in 1:S) {
+  x1 <- sample(Omega, size = 1, prob = Pr(Omega))
+  x2 <- sample(0:(10 - x1), size = 1, prob = Pr(0:(10 - x1), n = 10 - x1))
+if (x1 == 9 & x2 == 1) yes <- yes + 1
+}
+c(simulated = yes / S, truth = joint_Pr["9", "1"])
+```
+
+## Perfect Game
+
+This would simply be the probability of striking over 12 frames. Pr(Omega) represents our probabilities on the first roll of a frame, $x_1$ which is the only time a strike is possible. Therefore, we can calculate the probability of a strike by taking the probability of rolling a 10 in our first frame to the power of the number of frames bowled.
+
+```{r}
+Pr(Omega[11])^12 # the probability of a strike multiplied for each frame
+```
+
+Which leaves us with a probability of 0.0031 of rolling a perfect game.
+
+## Scoring
+
+
+**CHECK ANSWER (ADAPT)**
+```{r}
+S <- 10^6; yes <- 0
+for (s in 1:S) {
+  x1 <- sample(Omega, size = 1, prob = Pr(Omega))
+  x2 <- sample(0:(10 - x1), size = 1, prob = Pr(0:(10 - x1), n = 10 - x1))
+if (x1 == 9 & x2 == 1) yes <- yes + 1
+}
+c(simulated = yes / S, truth = joint_Pr["9", "1"])
+```
+
+## Variance
+
+
+# Probability in Poker
+
+
+## Going "All In"
+
+
+## Holz's First Decision
+
+
+## Holz's Second Decision
+
+
+## Independent Chip Model
+
+
+## Perspectives on Probability
+
+
+

@@ -78,7 +78,9 @@ Answer: $c \mu$
 
 If we multiplied the fist and second rolls
 
-$\mathbb{E}[X_1 + X_2] = \sum_x * \sum_y xPr(x \cap y) + \sum_y * \sum_x y(Pr(x \cap y)$
+$$
+\mathbb{E}[X_1 + X_2] = \sum_x * \sum_y xPr(x \cap y) + \sum_y * \sum_x y(Pr(x \cap y)
+$$
 
 OR
 

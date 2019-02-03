@@ -93,10 +93,6 @@ $$
 Pr(x_2 | X_1 = x_1, n = 10) = F_ ???
 $$
 
-```{r}
-
-```
-
 
 $$PR(x_2 | X_1 = x_1, n = 10)$$ is a **CONDITIONAL** probability
 
@@ -142,7 +138,7 @@ Aka $0.384 * 0.384 * 0.384$ or $0.384^3$
 
 What about 9 pins on first roll and 1 pin on second? --> The General Multiplication Rule!
 
-$Pr(9) * Pr(1)$ with the condition that 9 pints were knocked down...
+$Pr(9) * Pr(1)$ with the condition that 9 pins were knocked down...
 
 $Pr(x)$
 
