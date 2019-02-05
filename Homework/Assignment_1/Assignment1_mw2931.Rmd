@@ -26,6 +26,7 @@ Omega <- 0:10 # 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 is the sample space
 
 ## Admissibility
 
+#### 1.1 Answer
 We know that a Probability Mass Function is admissible because we are dealing with discrete random variables, each with a probability between 0 and 1, and with a cumulative sum of the probablities being 1.
 
 The individiual probabilities of each pin (0:10) are as follows:
@@ -51,12 +52,15 @@ for (x1 in Omega) {
 }
 ```
 
+#### 1.2.1 Answer
 
 1. The probability of rolling a strike on the first roll of a frame is 0.6181 (as given by the rounded probability of Omega below for hitting 10 pins)
 
 ```{r}
 round(Pr(Omega), digits = 4)
 ```
+
+#### 1.2.2 Answer
 
 2. The probability of a spare is a bit more complicated. We need to calculate the probability of each spare combination (0 & 10, 1 & 9, 2 & 8, 3 & 7, 4 & 6, 5 & 5, 6 & 4, 7 & 3, 8 & 2, and 9 & 1).
 
@@ -78,6 +82,8 @@ round(sum(spares[10, 1], spares[9, 2], spares[8, 3], spares[7, 4], spares[6, 5],
 ```
 
 So the probability of rolling a spare is 0.212
+
+#### 1.2.3 Answer
 
 3.The probability of not getting a strike nor a spare is simply 1 minus the probability of a strike and the probability of a spare, or...
 ```{r}
@@ -110,15 +116,10 @@ And then we can find the sum using the original joint_Pr probabilities like so:
 sum(joint_Pr * S)
 ```
 
+#### 1.3 Answer
 Which means the expected frame if we roll a non-strike and a non-spare is approximately 1.502 pins.
 
 ## Tenth Frame
-
-1. If the first roll is a strike, then you get two more rolls. For the first extra roll, there are 10 pins upright and if you knock them all down then they put 10 pins back up for the second extra roll. Otherwise, the second extra roll just has however many pins are left.
-So `probability of a strike * 10 pins + probability of no bonus strike * sum(joint_P`
-
-2. If the first roll is not a strike, but the second roll gets a spare, then you get one extra roll with 10 pins upright.
-If you do not get a spare, then there are no extra rolls.
 First we must calculate the probability of an open frame, spare, and strike.
 
 Let's first sum all of the possible non-strike and non spare options of joint_Pr
@@ -182,8 +183,6 @@ Ex_strike_x2
 ```
 
 
-
-
 $\mathbb{E}$[total pins]$= \mathbb{E}$[pins | open frame]$P($open frame$) + \mathbb{E}$[pins | spare frame]$P($spare frame$) + \mathbb{E}$[pins | strike frame]$P($strike frame$)$
 
 So we have to take the expected value of numb er of pins given the open pins and multiply times the probability of an open frame plus the expected pins of a spare frame times the probability of a spare frame and lastly the expected pins of a strike times the probability of a strike.
@@ -195,10 +194,12 @@ So we'll get...
 Ex_open * Pr_open + Ex_spare * Pr_spare + Ex_strike_open * Pr_strike_open + Ex_strike_x2 * Pr_strike_x2
 ```
 
+#### 1.4 Answer
 So we can expect roughly 19.041 pins in the final frame.
 
 ## Perfect Game
 
+#### 1.5 Answer
 This would simply be the probability of striking over 12 frames. Pr(Omega) represents our probabilities on the first roll of a frame, $x_1$ which is the only time a strike is possible. Therefore, we can calculate the probability of a strike by taking the probability of rolling a 10 in our first frame to the power of the number of frames bowled.
 
 ```{r}
@@ -262,10 +263,12 @@ So ultimately for 10 frames of bowling we should expect...
 Ex_frame * 10
 ```
 
+#### 1.6 Answer
 A score of approximately 190.407.
 
 ## Variance
 
+#### 1.7 Answer
 The variance of the entire game must be greater than the variance of a single frame, because - while frames are independent from each other - score is potentially dependent on subsequent frames. Also, since the 10th frame has a higher score possibility then the overall variance must be higher than a single frame. 
 
 # Probability in Poker
@@ -276,11 +279,12 @@ Bonomo = 51150000, Smith = 19700000) / 600000)
  
 ## Going "All In"
 
+#### 2.1 Answer
 Since there were only 5 players left, Kaverman was guaranteed a positive outcome, which allowed for some riskier play. The main thing with this situation, was that by going all in on a riskier hand, he still had a chance to win the hand, but going all in may also have caused his opponents to consider him having a stronger hand than he did, so they may have folded and ceded the hand to Kaverman. Since he has the fewest chips, even a small win with his opponents folding could expand his survivability and ultimately position him better for victory of the tournament. Even if his opponents did not fold, he had a statistical justification of going all in - even a weak one - that could have allowed him to greatly increase his chip count. If Kaverman believed his chances of success coupled with the potential gains from winning while going all in outweighed the risk of getting knocked out of the tournament - which still guaranteed him $2 million, then it would be a "logical" choice to go all in.
 
 ## Holz's First Decision
-*1. If Kaverman has a two cards with the same value that are higher than a pair of tens, what is the probability that Holz nevertheless wins the hand by getting three or four of a kind? For simplicity, you can assume that everyone else folds, and ignore the slim possibility that Kaverman or Holz gets a straight, flush, or full house.*
 
+### Simulated Method
 The probability of any of the 5 cards that are dealt being another 10 would be 2/(52 - 4 cards in their hands) = 2/48 = $\frac {1}{24}$ chance of a 10 being flipped on the first card. Every subsequent dealt card would be the equivalent of 2/48 - n where n is the number of cards dealt. This is assuming we're not counting the 2 cards that were in the other players' hands which could have contained the other pairs.
 
 So, basically, the odds of at least 1 or more 10s being dealt would be $\frac {2}{48} + \frac {2} {47} + \frac {2}{46} + \frac {2}{45} + \frac {2}{44}$ which is equal to
@@ -319,56 +323,63 @@ if (1 %in% hand & 2 %in% hand & !(3 %in% hand) & 4 %in% hand) win <- win + 1
 (simulated = win / S)
 ```
 
-**Leaving a probability of approximately 0.159 of Holz winning by drawing one or more pairs than Kaverman.**
+Leaving an estimated probability of approximately 0.159 of Holz winning by drawing one or more pairs than Kaverman.
+
+We could also do this with a hypergeometric distribution. The probability of drawing one ten is $\frac {2}{48} = \frac {1}{24}$ and both tens is $\frac {2}{48} * \frac {1}{47} = \frac {1}{1128}$. But we also have to consider that he'll win only if he draws more pairs than Kaverman, who has an equal probability of drawing one or both of his pairs. The probability of Kaverman NOT drawing his pairs is equal to $\frac {46}{48} * \frac {45}{47} = \frac {2025}{2256}$. 
+
+So the outcomes where Holz wins are where he draws one and Kaverman draws none, Holz draws both tens and Kaverman draws none, and Holz draws both tens and Kaverman draws one pair.
+
+This could be thought of as...
+
+ $\frac {2}{48} *  \frac {43}{47} *  \frac {42}{46} * \frac {41}{45} * \frac {40}{44}$
+$\frac {2}{48} *  \frac {1}{47} *  \frac {42}{46} * \frac {41}{45} * \frac {40}{44}$
+$\frac {2}{48} *  \frac {1}{47} *  \frac {2}{46} * \frac {41}{45} * \frac {40}{44}$
+ 
+### Hypergeometric Method
+To figure out these probabilities, we have to use dhyper, I believe separately on both Holz and Kaverman's possibilities.
+
+#### Probability Holz draws 0, 1 or 2 Tens
+```{r}
+holz_cards <- cbind(0:2, round(dhyper(0:2, 2, 48 - 2, 5) , digits = 6))
+holz_cards
+```
+We can see there's an 0.8 probability that no tens are drawn, a 0.191 probability that 1 is drawn, and approximately a 0.009 probability that both tens are drawn.
+
+This is the same for Kaverman.
+
+Thus, the probability that Holz beats Kaverman would be...
+
+```{r}
+holz_cards[2,2] * holz_cards[1,2] + holz_cards[3,2] * holz_cards[1,2] + holz_cards[3,2] * holz_cards[2,2]
+```
+
+#### 2.2.1 Answer
+**Which gives us the probability that Holz beats Kaverman of 0.161.**
+
 
 2. If Kaverman has a two cards with different values that are both higher than a ten, what is the probability that Holz wins the hand? Again, for simplicity you can assume that everyone else folds, and ignore the slim possibility that Kaverman or Holz gets a straight, flush, or full house.
 
+
+### Simulated Method
 Let's say this time Kaverman has an Ace and King.
 
-Here are all of the possible solutions:
+Here are all of the possible solutions where Holz can win:
 
 *0 tens, 0 aces, 0 kings: Holz Wins*
-0 tens, 0 ace, 1 kings: Kaverman Wins
-0 tens, 0 ace, 2 kings: Kaverman Wins
-0 tens, 0 ace, 3 kings: Kaverman Wins
-0 tens, 1 ace, 0 kings: Kaverman Wins
-0 tens, 1 ace, 1 kings: Kaverman Wins
-0 tens, 1 ace, 2 kings: Kaverman Wins
-0 tens, 1 ace, 3 kings: Kaverman Wins
-0 tens, 2 ace, 0 kings: Kaverman Wins
-0 tens, 2 ace, 1 kings: Kaverman Wins
-0 tens, 2 ace, 2 kings: Kaverman Wins
-0 tens, 2 ace, 3 kings: Kaverman Wins
-0 tens, 3 ace, 0 kings: Kaverman Wins
-0 tens, 3 ace, 1 kings: Kaverman Wins
-0 tens, 3 ace, 2 kings: Kaverman Wins # remember 5 cards are flipped in total
-
 *1 tens, 0 aces, 0 kings: Holz Wins*
 *1 tens, 0 ace, 1 kings: Holz Wins*
-1 tens, 0 ace, 2 kings: Kaverman Wins
-1 tens, 0 ace, 3 kings: Kaverman Wins
 *1 tens, 1 ace, 0 kings: Holz Wins* 
 *1 tens, 1 ace, 1 kings: Holz Wins* # because 3 of a kind beats two pair
-1 tens, 1 ace, 2 kings: Kaverman Wins
-1 tens, 1 ace, 3 kings: Kaverman Wins
-1 tens, 2 ace, 0 kings: Kaverman Wins
-1 tens, 2 ace, 1 kings: Kaverman Wins
-1 tens, 2 ace, 2 kings: Kaverman Wins
-1 tens, 3 ace, 0 kings: Kaverman Wins
-1 tens, 3 ace, 1 kings: Kaverman Wins
-
 *2 tens, 0 aces, 0 kings: Holz Wins*
 *2 tens, 0 ace, 1 kings: Holz Wins*
 *2 tens, 0 ace, 2 kings: Holz Wins*
-2 tens, 0 ace, 3 kings: Kaverman Wins
 *2 tens, 1 ace, 0 kings: Holz Wins*
 *2 tens, 1 ace, 1 kings: Holz Wins*
 *2 tens, 1 ace, 2 kings: Holz Wins*
 *2 tens, 2 ace, 0 kings: Holz Wins*
 *2 tens, 2 ace, 1 kings: Holz Wins*
-2 tens, 3 ace, 0 kings: Kaverman Wins
 
-Meaning out of 38 possible reveals, Holz has 13 possible winning pairs. Basically, whenever there are more tens than aces and more tens than kings (since 3 kings beats two pairs and 4 kings beats three of a kind and a pair).
+Meaning out of 38 possible pair reveals, Holz has 13 possible winning pairs. Basically, whenever there are more tens than aces and more tens than kings (since 3 kings beats two pairs and 4 kings beats three of a kind and a pair).
 
 Let's simulate it.
 ```{r}
@@ -394,10 +405,49 @@ if (tens > aces & tens > kings) win <- win + 1
 (simulated = win / S)
 ```
 
-**This leaves us with a simulated probability of Holz winning of approximately 0.577.**
+This leaves us with a simulated probability of Holz winning of approximately 0.577.
 
-3. *Based on your answers to the previous two subquestions and additional considerations, explain why the announcer says at 0:54 that “Holz is obviously calling”.*
+### Hypergeometric Method
+Let's do it again but with the hypergeometric distribution.
 
+While Holz's probability of drawing one or two tens remains the same, Kaverman's distribution is what changes.
+
+Let's look at the probability of Kaverman drawing more aces (since we decided arbitrarily he was looking for aces and kings).
+```{r}
+kav_cards <- cbind(0:3, round(dhyper(0:3, 3, 48 - 3, 5) , digits = 3))
+kav_cards
+```
+
+So there's a probability of 0.714 that none of one ace he needs are drawn, a probability of 0.261 that one ace is drawn, a probability of 0.025 that two aces are drawn, and a probability of just under 0.001 that all three are drawn.
+
+He has the same probabilities of 0-3 kings being drawn.
+
+
+```{r}
+
+holz_cards[1,2] * kav_cards[1,2] * kav_cards[1,2] +
+  holz_cards[2,2] * kav_cards[1,2] * kav_cards[1,2] +
+  holz_cards[2,2] * kav_cards[1,2] * kav_cards[2,2] +
+  holz_cards[2,2] * kav_cards[2,2] * kav_cards[1,2] +
+  holz_cards[2,2] * kav_cards[2,2] * kav_cards[2,2] +
+  holz_cards[3,2] * kav_cards[1,2] * kav_cards[1,2] +
+  holz_cards[3,2] * kav_cards[1,2] * kav_cards[2,2] +
+  holz_cards[3,2] * kav_cards[1,2] * kav_cards[3,2] +
+  holz_cards[3,2] * kav_cards[2,2] * kav_cards[1,2] +
+  holz_cards[3,2] * kav_cards[2,2] * kav_cards[2,2] +
+  holz_cards[3,2] * kav_cards[2,2] * kav_cards[3,2] +
+  holz_cards[3,2] * kav_cards[3,2] * kav_cards[1,2] +
+  holz_cards[3,2] * kav_cards[3,2] * kav_cards[2,2] +
+  holz_cards[3,2] * kav_cards[3,2] * kav_cards[3,2]
+```
+
+#### 2.2.2 Answer
+**Which leaves us with a probability that Holz wins of 0.598.**
+
+
+3. Based on your answers to the previous two subquestions and additional considerations, explain why the announcer says at 0:54 that “Holz is obviously calling”.
+
+#### 2.2.3 Answer
 I think calling is "obvious" in the sense that out of the 1326 possible hands only 24 beat what Holz currently has, indicating he has a pretty strong possibility of winning the hand. He can confidently call the all in because he has a strong chance of winning and can safely suffer a loss if he comes up short
 
 ## Holz's Second Decision
@@ -405,46 +455,108 @@ I think calling is "obvious" in the sense that out of the 1326 possible hands on
 
 1. What would their three chances of winning the hand be if Salomon instead had a pair of Aces?
 
+### Hypergeometric Method
+
+We need three different probabilities. We already have Holz's probability of drawing pairs, but need to revise the distribution to be focused on the cards rather than the people and correct the total number being drawn from.
+
+#### Ace Distribution
 ```{r}
-set.seed(232019)
-S <- 10^6; holz <- 0; kav <- 0; sal <- 0
-deck <- 1:46 # 46 other possible cards left after subtracting the three hands
-for (s in 1:S) {
-  hand <- sample(deck, 5, replace = FALSE)
-  tens <- 2
-  aces <- 1 # because both 
-  kings <- 1
-  fives <- 1
-if (1 %in% hand) tens <- tens + 1
-if (2 %in% hand) tens <- tens + 1  
-if (3 %in% hand) aces <- aces + 1
-if (4 %in% hand) aces <- aces + 1
-if (5 %in% hand) kings <- kings + 1
-if (6 %in% hand) kings <- kings + 1
-if (7 %in% hand) kings <- kings + 1
-if (8 %in% hand) fives <- fives + 1
-if (9 %in% hand) fives <- fives + 1
-if (10 %in% hand) fives <- fives + 1
-  
-if (tens > aces & tens > kings & tens >= fives) holz <- holz + 1
-if (aces >= tens & aces >= kings & aces >= fives) sal <- sal + 1
-if (kings > aces & kings >= tens & kings >= fives) sal <- sal + 1
-if (fives > aces & fives > kings & fives > tens) kav <- kav + 1
-} 
-(simulated = c(holz / S, kav / S, sal / S))
+ace_dist <- cbind(0:1, round(dhyper(0:1, 1, 46 - 1, 5) , digits = 6))
+ace_dist
 ```
 
-**So Holz has a probability of winning of approximately 0.607 , Kaverman has a probability of winning of 0.240, and Salomon has a probability of winning of 0.369.**
+So there is a probablity of 0.109 that the last ace is drawn.
+
+#### Ten Distribution
+```{r}
+ten_dist <- cbind(0:2, round(dhyper(0:2, 2, 46 - 2, 5) , digits = 6))
+ten_dist
+```
+
+#### Fives Distribution
+```{r}
+five_dist <- cbind(0:3, round(dhyper(0:3, 3, 46 - 3, 5) , digits = 6))
+five_dist
+```
+
+
+#### Holz Probability
+Holz will win if there are more tens than aces and equal or more tens than fives.
+```{r}
+pr_holz_win <- ten_dist[2,2] * ace_dist[1,2] * five_dist[1,2] +
+  ten_dist[2,2] * ace_dist[1,2] * five_dist[2,2] +
+  ten_dist[2,2] * ace_dist[1,2] * five_dist[3,2] +
+  ten_dist[3,2] * ace_dist[1,2] * five_dist[1,2] +
+  ten_dist[3,2] * ace_dist[1,2] * five_dist[2,2] +
+  ten_dist[3,2] * ace_dist[1,2] * five_dist[3,2] +
+  ten_dist[3,2] * ace_dist[1,2] * five_dist[4,2] +
+  ten_dist[3,2] * ace_dist[2,2] * five_dist[1,2] +
+  ten_dist[3,2] * ace_dist[2,2] * five_dist[2,2] +
+  ten_dist[3,2] * ace_dist[2,2] * five_dist[3,2] +
+  ten_dist[3,2] * ace_dist[2,2] * five_dist[4,2]
+pr_holz_win
+```
+
+So Holz would have a probability of 0.186 of winning the hand.
+
+#### Salomon Probability
+Salomon can win only if the number of aces is equal or greater than tens and fives
+
+```{r}
+pr_sal_win <- ace_dist[1,2] * five_dist[1,2] * ten_dist[1,2] +
+  ace_dist[1,2] * five_dist[2,2] * ten_dist[1,2] +
+  ace_dist[2,2] * five_dist[1,2] * ten_dist[1,2] +
+  ace_dist[2,2] * five_dist[1,2] * ten_dist[2,2] +
+  ace_dist[2,2] * five_dist[2,2] * ten_dist[1,2] +
+  ace_dist[2,2] * five_dist[2,2] * ten_dist[2,2] +
+  ace_dist[2,2] * five_dist[3,2] * ten_dist[1,2] +
+  ace_dist[2,2] * five_dist[3,2] * ten_dist[2,2]
+pr_sal_win
+```
+So a 0.794 probability of Salomon winning.
+
+#### Kaverman Probability
+We could simply calculate this as 1 - the probability of Holz winning - the probability of Salomon winning.
+```{r}
+pr_kav_win <- 1 - pr_holz_win - pr_sal_win
+pr_kav_win
+```
+
+So a 0.045 probability of winning. If we wanted to use the distribution we could confirm it with the probability of cutting more fives than both tens and aces.
+
+```{r}
+pr_kav_win2 <- five_dist[3,2] * ace_dist[1,2] * ten_dist[1,2] +
+  five_dist[4,2] * ace_dist[1,2] * ten_dist[1,2] +
+  five_dist[4,2] * ace_dist[1,2] * ten_dist[1,2] +
+  five_dist[4,2] * ace_dist[1,2] * ten_dist[2,2] +
+  five_dist[4,2] * ace_dist[2,2] * ten_dist[1,2] +
+  five_dist[4,2] * ace_dist[2,2] * ten_dist[2,2]
+pr_kav_win2
+```
+
+I believe the difference above is simply a rounding issue.
+
+
+#### 2.3.1 Answer
+
+So, the probabilities of winning are as follows:
+Holz = 0.186
+Salomon = 0.794
+Kaverman = 0.020
 
 2. From Holz’s perspective, what is the probability that Salomon has a pair of Aces?
+
+#### 2.3.2 Answer
 
 Technically, since Salomon already has 1 known ace, and Holz knows the two cards that were dealt to himself, there is a 3/49 chance of the reamining card being another ace (49 being all cards that Holz doesn't know). However, since Salomon also went all in Holz would know that Salomon had one of the aforementioned 138 safe hands, of which 15 out of the 138 hands included the Ace of hearts. That being said, only a pair of aces would have been better than Holz's hand, so there was a 3/15 or 1/5 chance to Holz that Salomon had a better hand.
 
 3. Based on your answer’s to the previous two subquestions and additional considerations, was Holz’s decision to call the second time a good decision or a bad decision. Why?
 
+#### 2.3.3 Answer
 Given that there was a 1/5 chance that Salomon had a stronger hand, it was still in Holz's favor to call, but those are still very close odds to bet the majority of one's chips on.
 
 ## Independent Chip Model
+#### 2.4 Answer
 *Use the ICM compute the expected amount of prize money Salomon would have won had he not exposed the Ace of hearts.*
 ```{r}
 stacks <- c(Salomon = 45000000, Holz = 20650000, Bonomo = 51150000, Smith = 19700000)
@@ -455,6 +567,7 @@ stacks <- c(Salomon = 45000000, Holz = 20650000, Bonomo = 51150000, Smith = 1970
 
 ## Perspectives on Probability
 
+#### 2.5 Answer
 Poker involves classical probability because each hand has equal odds of being dealt, frequentist statistics in that you can use behavior like someone going all in to narrow down the possible hand the player has based on those hands being deemed acceptable to safely go in on. Lastly, you could argue it is Bayesian in that you could observe prior hands of an opponent to see how safely or dangerously they play. Perhaps they go in on unsafe hands, or only on very safe hands. These past behaviors can shift your prediction of the player's current behavior.
 
 
