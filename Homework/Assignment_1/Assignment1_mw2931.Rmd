@@ -97,7 +97,6 @@ S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
 sum(joint_Pr * S)
 ```
 
-
 But in this case, a spare and strike being non-viable. We can remove those combinations from our sample space like so: 
 
 ```{r}
@@ -115,77 +114,282 @@ Which means the expected frame if we roll a non-strike and a non-spare is approx
 
 ## Tenth Frame
 
-**NEED TO COMPLETE**
+### Expectations of Open Frame, Strikes and Spares
+
+First we must calculate the probability of an open frame, spare, and strike.
+
+Let's first sum all of the possible non-strike and non spare options of joint_Pr
+```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
+S <- ifelse(S >= 10, 0, S) # makes combinations of 10, which are all strike and spare combos, 0
+
+open_true <- ifelse(S > 0, 1, 0)
+open_true[1,1] <- 1 # fix that this is dropped
 
 
-**CHECK ANSWER (ADAPT)**
+Pr_open <- sum(joint_Pr * open_true) 
+Pr_open
+```
+We also already calculated the probablity of a spare and a strike
+```{r}
+Pr_spare <- sum(spares[10, 1], spares[9, 2], spares[8, 3], spares[7, 4], spares[6, 5], spares[5, 6], spares[4, 7], spares[3, 8], spares[2, 9], spares[1, 10])
+Pr_strike <- Pr(Omega[11])
 
-If $x_1$ < 10, $x_2$ can be 0:(10-$x_1$) and $x_3$ does not exist and must therefore be 0.
-If $x_1$ == 10, $x_2$ can be 0:9 and $x_3$ can be 0:(10-$x_2$)
-If $x_1$ == 10 and $x_2$ == 10 then $x_3$ can be 0:10
+sum(Pr_open, Pr_spare, Pr_strike)
+```
 
-Total number of possible pins is 30; $x_1 = 10 + x_2 = 10 + x_3 = 10$
-Minimum number of possible pins is 0; $x_1 = 0 + x_2 = 0 + x_3 = 0$
-If $x_1 = 10$,
+So..
+
+
+$\mathbb{E}$[total pins]$= \mathbb{E}$[pins | open frame]$P($open frame$) + \mathbb{E}$[pins | spare frame]$P($spare frame$) + \mathbb{E}$[pins | strike frame]$P($strike frame$)$
+
+So we have to take the expected value of number of pins given the open pins and multiply times the probability of an open frame plus the expected pins of a spare frame times the probability of a spare frame and lastly the expected pins of a strike times the probability of a strike.
+
+Next let's calculate the expectation for each roll.
+
+If we bowl an open frame, the expecation, as we calculated before, would be 1.502 pins
+```{r}
+Ex_open <- sum(joint_Pr * S)
+```
+
+If we bowl a spare, then our expected value would be 10
+
+```{r}
+Ex_spare <- 10 + sum(Omega * Pr(Omega))
+```
+
+And if we get a strike on the first roll of the tenth frame, our expected number of pins would be 10
 
 ```{r}
 S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
-S
+Ex_strike <- 10 + sum(joint_Pr * S) # this might not be correct, as it can't include the possibility of a double strike. That said, two sum(Omega*Pr(Omega)) would not work if it's an open frame.
 ```
 
+
+$\mathbb{E}$[total pins]$= \mathbb{E}$[pins | open frame]$P($open frame$) + \mathbb{E}$[pins | spare frame]$P($spare frame$) + \mathbb{E}$[pins | strike frame]$P($strike frame$)$
+
+So we have to take the expected value of numb er of pins given the open pins and multiply times the probability of an open frame plus the expected pins of a spare frame times the probability of a spare frame and lastly the expected pins of a strike times the probability of a strike.
+
+
+So we'll get... 
+
 ```{r}
-S <- 10^6; yes <- 0
-for (s in 1:S) {
-  x1 <- sample(Omega, size = 1, prob = Pr(Omega))
-  x2 <- sample(0:(10 - x1), size = 1, prob = Pr(0:(10 - x1), n = 10 - x1))
-if (x1 == 9 & x2 == 1) yes <- yes + 1
-}
-c(simulated = yes / S, truth = joint_Pr["9", "1"])
+Ex_open * Pr_open + Ex_spare * Pr_spare + Ex_strike * Pr_strike
 ```
+
+So we can expect roughly 16.6 pins in the final frame? I think this is slightly off, though, as I'm unsure how to include the chance of the two strikes, which would theoretically raise this.
+
+If we used the expected value of a strike to be `10 + sum(Omega * Pr(Omega)) + sum(Omega * Pr(Omega))` then we'd get approximately 22.143 pins, which is most likely too high.
 
 ## Perfect Game
 
 This would simply be the probability of striking over 12 frames. Pr(Omega) represents our probabilities on the first roll of a frame, $x_1$ which is the only time a strike is possible. Therefore, we can calculate the probability of a strike by taking the probability of rolling a 10 in our first frame to the power of the number of frames bowled.
 
 ```{r}
-Pr(Omega[11])^12 # the probability of a strike multiplied for each frame
+Pr(Omega[11])^12 # the probability of a strike multiplied for each frame and the 2 additional strikes possible in frame 10
 ```
 
 Which leaves us with a probability of 0.0031 of rolling a perfect game.
 
 ## Scoring
 
-
-**CHECK ANSWER (ADAPT)**
+### ** NEED TO FIX **
 ```{r}
-S <- 10^6; yes <- 0
-for (s in 1:S) {
-  x1 <- sample(Omega, size = 1, prob = Pr(Omega))
-  x2 <- sample(0:(10 - x1), size = 1, prob = Pr(0:(10 - x1), n = 10 - x1))
-if (x1 == 9 & x2 == 1) yes <- yes + 1
-}
-c(simulated = yes / S, truth = joint_Pr["9", "1"])
+
 ```
+
 
 ## Variance
 
+The variance of the entire game must be greater than the variance of a single frame, because - while frames are independent from each other - score is potentially dependent on subsequent frames. Also, since the 10th frame has a higher score possibility then the overall variance must be higher than a single frame. 
 
 # Probability in Poker
-
-
+```{r}
+(stacks <- c(Salomon = 27450000, Kaverman = 8025000, Holz = 28675000,
+Bonomo = 51150000, Smith = 19700000) / 600000)
+```
+ 
 ## Going "All In"
 
+Since there were only 5 players left, Kaverman was guaranteed a positive outcome, which allowed for some riskier play. The main thing with this situation, was that by going all in on a riskier hand, he still had a chance to win the hand, but going all in may also have caused his opponents to consider him having a stronger hand than he did, so they may have folded and ceded the hand to Kaverman. Since he has the fewest chips, even a small win with his opponents folding could expand his survivability and ultimately position him better for victory of the tournament. Even if his opponents did not fold, he had a statistical justification of going all in - even a weak one - that could have allowed him to greatly increase his chip count. If Kaverman believed his chances of success coupled with the potential gains from winning while going all in outweighed the risk of getting knocked out of the tournament - which still guaranteed him $2 million, then it would be a "logical" choice to go all in.
 
 ## Holz's First Decision
+*1. If Kaverman has a two cards with the same value that are higher than a pair of tens, what is the probability that Holz nevertheless wins the hand by getting three or four of a kind? For simplicity, you can assume that everyone else folds, and ignore the slim possibility that Kaverman or Holz gets a straight, flush, or full house.*
 
+The probability of any of the 5 cards that are dealt being another 10 would be 2/(52 - 4 cards in their hands) = 2/48 = $\frac {1}{24}$ chance of a 10 being flipped on the first card. Every subsequent dealt card would be the equivalent of 2/48 - n where n is the number of cards dealt. This is assuming we're not counting the 2 cards that were in the other players' hands which could have contained the other pairs.
+
+So, basically, the odds of at least 1 or more 10s being dealt would be $\frac {2}{48} + \frac {2} {47} + \frac {2}{46} + \frac {2}{45} + \frac {2}{44}$ which is equal to
+
+```{r}
+(2/48) + (2/47) + (2/46) + (2/45) + (2/44)
+```
+
+However, there's an equal probability that one or both of Kaverman's cards are dealt during that time. For simplicity's sake let's assume Kaverman had two aces.
+
+Here are all of the possibilities of the 5 revealed cards:
+
+0 tens drawn, 0 aces : Kaverman Wins
+*1 ten, 0 aces: Holz wins*
+1 ten, 1 ace: Kaverman wins
+1 ten, 2 aces: Kaverman wins
+*2 tens, 0 aces: Holz wins*
+*2 tens, 1 ace: Holz wins*
+2 tens, 2 aces: Kaverman wins
+
+There are three scenarios where Holz can win.
+
+We could simulate this as such:
+```{r}
+set.seed(232019)
+S <- 10^6; win <- 0
+deck <- 1:48 # 48 other possible cards left after subtracting the two hands
+for (s in 1:S) {
+  hand <- sample(deck, 5, replace = FALSE)
+if (1 %in% hand & !(2 %in% hand) & !(3 %in% hand) & !(4 %in% hand)) win <- win + 1
+if (!(1 %in% hand) & 2 %in% hand & !(3 %in% hand) & !(4 %in% hand)) win <- win + 1
+if (1 %in% hand & 2 %in% hand & !(3 %in% hand) & !(4 %in% hand))
+if (1 %in% hand & 2 %in% hand & 3 %in% hand & !(4 %in% hand)) win <- win + 1
+if (1 %in% hand & 2 %in% hand & !(3 %in% hand) & 4 %in% hand) win <- win + 1
+}
+(simulated = win / S)
+```
+
+**Leaving a probability of approximately 0.159 of Holz winning by drawing one or more pairs than Kaverman.**
+
+2. If Kaverman has a two cards with different values that are both higher than a ten, what is the probability that Holz wins the hand? Again, for simplicity you can assume that everyone else folds, and ignore the slim possibility that Kaverman or Holz gets a straight, flush, or full house.
+
+Let's say this time Kaverman has an Ace and King.
+
+Here are all of the possible solutions:
+
+*0 tens, 0 aces, 0 kings: Holz Wins*
+0 tens, 0 ace, 1 kings: Kaverman Wins
+0 tens, 0 ace, 2 kings: Kaverman Wins
+0 tens, 0 ace, 3 kings: Kaverman Wins
+0 tens, 1 ace, 0 kings: Kaverman Wins
+0 tens, 1 ace, 1 kings: Kaverman Wins
+0 tens, 1 ace, 2 kings: Kaverman Wins
+0 tens, 1 ace, 3 kings: Kaverman Wins
+0 tens, 2 ace, 0 kings: Kaverman Wins
+0 tens, 2 ace, 1 kings: Kaverman Wins
+0 tens, 2 ace, 2 kings: Kaverman Wins
+0 tens, 2 ace, 3 kings: Kaverman Wins
+0 tens, 3 ace, 0 kings: Kaverman Wins
+0 tens, 3 ace, 1 kings: Kaverman Wins
+0 tens, 3 ace, 2 kings: Kaverman Wins # remember 5 cards are flipped in total
+
+*1 tens, 0 aces, 0 kings: Holz Wins*
+*1 tens, 0 ace, 1 kings: Holz Wins*
+1 tens, 0 ace, 2 kings: Kaverman Wins
+1 tens, 0 ace, 3 kings: Kaverman Wins
+*1 tens, 1 ace, 0 kings: Holz Wins* 
+*1 tens, 1 ace, 1 kings: Holz Wins* # because 3 of a kind beats two pair
+1 tens, 1 ace, 2 kings: Kaverman Wins
+1 tens, 1 ace, 3 kings: Kaverman Wins
+1 tens, 2 ace, 0 kings: Kaverman Wins
+1 tens, 2 ace, 1 kings: Kaverman Wins
+1 tens, 2 ace, 2 kings: Kaverman Wins
+1 tens, 3 ace, 0 kings: Kaverman Wins
+1 tens, 3 ace, 1 kings: Kaverman Wins
+
+*2 tens, 0 aces, 0 kings: Holz Wins*
+*2 tens, 0 ace, 1 kings: Holz Wins*
+*2 tens, 0 ace, 2 kings: Holz Wins*
+2 tens, 0 ace, 3 kings: Kaverman Wins
+*2 tens, 1 ace, 0 kings: Holz Wins*
+*2 tens, 1 ace, 1 kings: Holz Wins*
+*2 tens, 1 ace, 2 kings: Holz Wins*
+*2 tens, 2 ace, 0 kings: Holz Wins*
+*2 tens, 2 ace, 1 kings: Holz Wins*
+2 tens, 3 ace, 0 kings: Kaverman Wins
+
+Meaning out of 38 possible reveals, Holz has 13 possible winning pairs. Basically, whenever there are more tens than aces and more tens than kings (since 3 kings beats two pairs and 4 kings beats three of a kind and a pair).
+
+Let's simulate it.
+```{r}
+set.seed(232019)
+S <- 10^6; win <- 0
+deck <- 1:48 # 48 other possible cards left after subtracting the two hands
+for (s in 1:S) {
+  hand <- sample(deck, 5, replace = FALSE)
+  tens <- 2
+  aces <- 1
+  kings <- 1
+if (1 %in% hand) tens <- tens + 1
+if (2 %in% hand) tens <- tens + 1  
+if (3 %in% hand) aces <- aces + 1
+if (4 %in% hand) aces <- aces + 1
+if (5 %in% hand) aces <- aces + 1
+if (6 %in% hand) kings <- kings + 1
+if (7 %in% hand) kings <- kings + 1
+if (8 %in% hand) kings <- kings + 1
+
+if (tens > aces & tens > kings) win <- win + 1
+} 
+(simulated = win / S)
+```
+
+**This leaves us with a simulated probability of Holz winning of approximately 0.577.**
+
+3. *Based on your answers to the previous two subquestions and additional considerations, explain why the announcer says at 0:54 that “Holz is obviously calling”.*
+
+I think calling is "obvious" in the sense that out of the 1326 possible hands only 24 beat what Holz currently has, indicating he has a pretty strong possibility of winning the hand. He can confidently call the all in because he has a strong chance of winning and can safely suffer a loss if he comes up short
 
 ## Holz's Second Decision
+*Holz thinks for a while before eventually calling, at which point the video says that Holz has a 50% chance to win the hand, Salomon has a 35% chance, and Kaverman has a 15% chance.*
 
+1. What would their three chances of winning the hand be if Salomon instead had a pair of Aces?
+
+```{r}
+set.seed(232019)
+S <- 10^6; holz <- 0; kav <- 0; sal <- 0
+deck <- 1:46 # 46 other possible cards left after subtracting the three hands
+for (s in 1:S) {
+  hand <- sample(deck, 5, replace = FALSE)
+  tens <- 2
+  aces <- 1 # because both 
+  kings <- 1
+  fives <- 1
+if (1 %in% hand) tens <- tens + 1
+if (2 %in% hand) tens <- tens + 1  
+if (3 %in% hand) aces <- aces + 1
+if (4 %in% hand) aces <- aces + 1
+if (5 %in% hand) kings <- kings + 1
+if (6 %in% hand) kings <- kings + 1
+if (7 %in% hand) kings <- kings + 1
+if (8 %in% hand) fives <- fives + 1
+if (9 %in% hand) fives <- fives + 1
+if (10 %in% hand) fives <- fives + 1
+  
+if (tens > aces & tens > kings & tens >= fives) holz <- holz + 1
+if (aces >= tens & aces >= kings & aces >= fives) sal <- sal + 1
+if (kings > aces & kings >= tens & kings >= fives) sal <- sal + 1
+if (fives > aces & fives > kings & fives > tens) kav <- kav + 1
+} 
+(simulated = c(holz / S, kav / S, sal / S))
+```
+
+**So Holz has a probability of winning of approximately 0.607 , Kaverman has a probability of winning of 0.240, and Salomon has a probability of winning of 0.369.**
+
+2. From Holz’s perspective, what is the probability that Salomon has a pair of Aces?
+
+Technically, since Salomon already has 1 known ace, and Holz knows the two cards that were dealt to himself, there is a 3/49 chance of the reamining card being another ace (49 being all cards that Holz doesn't know). However, since Salomon also went all in Holz would know that Salomon had one of the aforementioned 138 safe hands, of which 15 out of the 138 hands included the Ace of hearts. That being said, only a pair of aces would have been better than Holz's hand, so there was a 3/15 or 1/5 chance to Holz that Salomon had a better hand.
+
+3. Based on your answer’s to the previous two subquestions and additional considerations, was Holz’s decision to call the second time a good decision or a bad decision. Why?
+
+Given that there was a 1/5 chance that Salomon had a stronger hand, it was still in Holz's favor to call, but those are still very close odds to bet the majority of one's chips on.
 
 ## Independent Chip Model
+*Use the ICM compute the expected amount of prize money Salomon would have won had he not exposed the Ace of hearts.*
+```{r}
+stacks <- c(Salomon = 45000000, Holz = 20650000, Bonomo = 51150000, Smith = 19700000)
+(prob <- stacks / sum(stacks))
+```
 
+###**NEED TO FIX **
 
 ## Perspectives on Probability
 
+Poker involves classical probability because each hand has equal odds of being dealt, frequentist statistics in that you can use behavior like someone going all in to narrow down the possible hand the player has based on those hands being deemed acceptable to safely go in on. Lastly, you could argue it is Bayesian in that you could observe prior hands of an opponent to see how safely or dangerously they play. Perhaps they go in on unsafe hands, or only on very safe hands. These past behaviors can shift your prediction of the player's current behavior.
 
 
