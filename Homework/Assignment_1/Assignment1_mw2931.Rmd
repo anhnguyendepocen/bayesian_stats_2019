@@ -114,8 +114,11 @@ Which means the expected frame if we roll a non-strike and a non-spare is approx
 
 ## Tenth Frame
 
-### Expectations of Open Frame, Strikes and Spares
+1. If the first roll is a strike, then you get two more rolls. For the first extra roll, there are 10 pins upright and if you knock them all down then they put 10 pins back up for the second extra roll. Otherwise, the second extra roll just has however many pins are left.
+So `probability of a strike * 10 pins + probability of no bonus strike * sum(joint_P`
 
+2. If the first roll is not a strike, but the second roll gets a spare, then you get one extra roll with 10 pins upright.
+If you do not get a spare, then there are no extra rolls.
 First we must calculate the probability of an open frame, spare, and strike.
 
 Let's first sum all of the possible non-strike and non spare options of joint_Pr
@@ -133,9 +136,10 @@ Pr_open
 We also already calculated the probablity of a spare and a strike
 ```{r}
 Pr_spare <- sum(spares[10, 1], spares[9, 2], spares[8, 3], spares[7, 4], spares[6, 5], spares[5, 6], spares[4, 7], spares[3, 8], spares[2, 9], spares[1, 10])
-Pr_strike <- Pr(Omega[11])
+Pr_strike_open <- Pr(Omega[11]) * (Pr_open + Pr_spare)
+Pr_strikex2 <- Pr(Omega[11]) * Pr(Omega[11])
 
-sum(Pr_open, Pr_spare, Pr_strike)
+sum(Pr_open, Pr_spare, Pr_strike_open, Pr_strikex2)
 ```
 
 So..
@@ -147,23 +151,37 @@ So we have to take the expected value of number of pins given the open pins and 
 
 Next let's calculate the expectation for each roll.
 
+### Expected Pins for Open Frame
 If we bowl an open frame, the expecation, as we calculated before, would be 1.502 pins
 ```{r}
 Ex_open <- sum(joint_Pr * S)
+Ex_open
 ```
 
+### Expected Pins for Spare
 If we bowl a spare, then our expected value would be 10
-
 ```{r}
 Ex_spare <- 10 + sum(Omega * Pr(Omega))
+Ex_spare
 ```
 
-And if we get a strike on the first roll of the tenth frame, our expected number of pins would be 10
 
+### Expected Pins for One Strike, but No Bonus Strike
+And if we get a strike on the first roll of the tenth frame, our expected number of pins would be 10
 ```{r}
 S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
-Ex_strike <- 10 + sum(joint_Pr * S) # this might not be correct, as it can't include the possibility of a double strike. That said, two sum(Omega*Pr(Omega)) would not work if it's an open frame.
+S[11, 1] <- 0 # remove strike possibility of bonus
+Ex_strike_open <- 10 + sum(joint_Pr * S) 
+Ex_strike_open
 ```
+
+### Expected pins for One Strike and One Bonus Strike
+```{r}
+Ex_strike_x2 <- 20 + sum(Omega * Pr(Omega))
+Ex_strike_x2
+```
+
+
 
 
 $\mathbb{E}$[total pins]$= \mathbb{E}$[pins | open frame]$P($open frame$) + \mathbb{E}$[pins | spare frame]$P($spare frame$) + \mathbb{E}$[pins | strike frame]$P($strike frame$)$
@@ -174,12 +192,10 @@ So we have to take the expected value of numb er of pins given the open pins and
 So we'll get... 
 
 ```{r}
-Ex_open * Pr_open + Ex_spare * Pr_spare + Ex_strike * Pr_strike
+Ex_open * Pr_open + Ex_spare * Pr_spare + Ex_strike_open * Pr_strike_open + Ex_strike_x2 * Pr_strike_x2
 ```
 
-So we can expect roughly 16.6 pins in the final frame? I think this is slightly off, though, as I'm unsure how to include the chance of the two strikes, which would theoretically raise this.
-
-If we used the expected value of a strike to be `10 + sum(Omega * Pr(Omega)) + sum(Omega * Pr(Omega))` then we'd get approximately 22.143 pins, which is most likely too high.
+So we can expect roughly 19.041 pins in the final frame.
 
 ## Perfect Game
 
@@ -193,11 +209,60 @@ Which leaves us with a probability of 0.0031 of rolling a perfect game.
 
 ## Scoring
 
-### ** NEED TO FIX **
+Let's reassert the probabilities of open frames, spares, and strikes.
 ```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
+S <- ifelse(S >= 10, 0, S) # makes combinations of 10, which are all strike and spare combos, 0
 
+open_true <- ifelse(S > 0, 1, 0)
+open_true[1,1] <- 1 # fix that this is dropped
+Pr_open <- sum(joint_Pr * open_true) 
+Pr_spare <- sum(spares[10, 1], spares[9, 2], spares[8, 3], spares[7, 4], spares[6, 5], spares[5, 6], spares[4, 7], spares[3, 8], spares[2, 9], spares[1, 10])
+Pr_strike_open <- Pr(Omega[11]) * (Pr_open + Pr_spare) # probability of only single strike
+Pr_strike_x2 <- Pr(Omega[11]) * Pr(Omega[11]) # probability of double strike
+
+sum(Pr_open, Pr_spare, Pr_strike_open, Pr_strike_x2)
 ```
 
+Let's also re-establish the expected pins, which should actually double as the score for how I've calculated it.
+```{r}
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1
+S <- ifelse(S >= 10, 0, S) # makes combinations of 10, which are all strike and spare combos, 0
+Ex_open <- sum(joint_Pr * S)
+
+Ex_spare <- 10 + sum(Omega * Pr(Omega))
+
+S <- row(joint_Pr) - 1 + col(joint_Pr) - 1 # for 10th frame
+S[11, 1] <- 0 # remove strike possibility of bonus
+Ex_strike_open <- 10 + sum(joint_Pr * S) 
+Ex_strike_x2 <- 20 + sum(Omega & Pr(Omega))
+```
+
+
+### One Frame Score Expectation
+```{r}
+Ex_frame <- (Ex_open * Pr_open + Ex_spare * Pr_spare + Ex_strike_open * Pr_strike_open + Ex_strike_x2 * Pr_strike_x2)
+Ex_frame
+```
+
+So each frame we'd expect a score of approximately 19.041
+
+### Nine Frames Score Expectation
+```{r}
+Ex_frame * 9
+```
+
+Meaning we'd expect a score of 171.39 over 9 frames.
+
+Having done this, I now realize that the expectation of each frame is the same as the tenth score (which was hinted at in the question).
+
+So ultimately for 10 frames of bowling we should expect...
+
+```{r}
+Ex_frame * 10
+```
+
+A score of approximately 190.407.
 
 ## Variance
 
