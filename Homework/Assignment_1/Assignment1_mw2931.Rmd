@@ -138,9 +138,9 @@ We also already calculated the probablity of a spare and a strike
 ```{r}
 Pr_spare <- sum(spares[10, 1], spares[9, 2], spares[8, 3], spares[7, 4], spares[6, 5], spares[5, 6], spares[4, 7], spares[3, 8], spares[2, 9], spares[1, 10])
 Pr_strike_open <- Pr(Omega[11]) * (Pr_open + Pr_spare)
-Pr_strikex2 <- Pr(Omega[11]) * Pr(Omega[11])
+Pr_strike_x2 <- Pr(Omega[11]) * Pr(Omega[11])
 
-sum(Pr_open, Pr_spare, Pr_strike_open, Pr_strikex2)
+sum(Pr_open, Pr_spare, Pr_strike_open, Pr_strike_x2)
 ```
 
 So..
@@ -556,14 +556,147 @@ Technically, since Salomon already has 1 known ace, and Holz knows the two cards
 Given that there was a 1/5 chance that Salomon had a stronger hand, it was still in Holz's favor to call, but those are still very close odds to bet the majority of one's chips on.
 
 ## Independent Chip Model
-#### 2.4 Answer
 *Use the ICM compute the expected amount of prize money Salomon would have won had he not exposed the Ace of hearts.*
 ```{r}
 stacks <- c(Salomon = 45000000, Holz = 20650000, Bonomo = 51150000, Smith = 19700000)
-(prob <- stacks / sum(stacks))
+prob <- stacks / sum(stacks)
+prob
 ```
 
-###**NEED TO FIX **
+### 24 Possible Outcomes
+Salomon Bonomo Holz Smith
+Salomon Bonomo Smith Holz
+Salomon Holz Bonomo Smith
+Salomon Holz Smith Bonomo
+Salomon Smith Bonomo Holz
+Salomon Smith Holz Bonomo
+
+Bonomo Salomon Holz Smith
+Bonomo Salomon Smith Holz
+Holz Salomon Bonomo Smith
+Holz Salomon Smith Bonomo
+Smith Salomon Bonomo Holz
+Smith Salomon Holz Bonomo
+
+Bonomo Holz Salomon Smith
+Bonomo Smith Salomon Holz
+Holz Bonomo Salomon Smith
+Holz Smith Salomon Bonomo
+Smith Bonomo Salomon Holz
+Smith Holz Salomon Bonomo
+
+Bonomo Holz Smith Salomon
+Bonomo Smith Holz Salomon
+Holz Bonomo Smith Salomon
+Holz Smith Bonomo Salomon
+Smith Bonomo Holz Salomon
+Smith Holz Bonomo Salomon
+
+
+
+### Probability Salomon finishes 1st place
+This is equal to the proportion of chips Salomon has, so 0.3297. Let's calculate the proportions for the others finishing in second.
+
+```{r}
+Pr_sal_first <- prob[1]
+```
+
+
+Salomon first, else second
+```{r}
+(sal_first <- rbind(c(stacks[2], stacks[3], stacks[4])) / sum(stacks[2], stacks[3], stacks[4]))
+```
+
+
+### Probability Salomon finishes 2nd Place
+This is equal to...
+
+Holz finishes first, else second
+```{r}
+(holz_first <- rbind(c(stacks[1], stacks[3], stacks[4])) / sum(stacks[1], stacks[3], stacks[4]))
+```
+
+Bonomo first, else second
+```{r}
+(bon_first <-  rbind(c(stacks[1], stacks[2], stacks[4])) / sum(stacks[1], stacks[2], stacks[4]))
+```
+
+Smith first, else second
+```{r}
+(smith_first <- rbind(c(stacks[1], stacks[2], stacks[3])) / sum(stacks[1], stacks[2], stacks[3]))
+```
+
+Salomon Total Second Probability
+```{r}
+(Pr_sal_sec <- sum(c(prob[2]*holz_first[1], prob[3]*bon_first[1], prob[4]*smith_first[1])))
+```
+So the probability of Salomon coming in second is 0.312.
+
+### Probability Salomon finishes 3rd place
+We have to calculate for all pairs of 1st and 2nd place.
+
+Holz first, Bonomo second, else third
+
+```{r}
+(holz_bon <- rbind(c(stacks[1], stacks[4])) / sum(stacks[1], stacks[4]))
+```
+
+Holz first, Smith second, else third
+```{r}
+(holz_smith <- rbind(c(stacks[1], stacks[3])) / sum(stacks[1], stacks[3]))
+```
+
+Bonomo first, Smith Second, else third
+```{r}
+(bon_smith <- rbind(c(stacks[1], stacks[2])) / sum(stacks[1], stacks[2]))
+```
+
+Bonomo First, Holz Second, else third
+```{r}
+(bon_holz <- rbind(c(stacks[1], stacks[4])) / sum(stacks[1], stacks[4]))
+```
+
+Smith First, Bonomo Second, else third
+```{r}
+(smith_bon <- rbind(c(stacks[1], stacks[2])) / sum(stacks[1], stacks[2]))
+```
+
+Smith First, Holz Second, else third
+```{r}
+(smith_holz <- rbind(c(stacks[1], stacks[3])) / sum(stacks[1], stacks[3]))
+
+```
+
+Salomon Total Third Probability
+```{r}
+
+Pr_holz_bon <- prob[2] * holz_first[2] * holz_bon[1]
+Pr_holz_smith <- prob[2] * holz_first[3] * holz_smith[1]
+Pr_bon_smith <- prob[3] * bon_first[3] * bon_smith[1]
+Pr_bon_holz <- prob[3] * bon_first[2] * bon_holz[1]
+Pr_smith_bon <- prob[4] * smith_first[3] * smith_bon[1]
+Pr_smith_holz <- prob[4] * smith_first[2] * smith_holz[1]
+
+(Pr_sal_third <- sum(c(Pr_holz_bon, Pr_holz_smith, Pr_bon_smith, Pr_bon_holz, Pr_smith_bon, Pr_smith_holz)))
+```
+So the probability of Salomon coming in second is 0.236.
+
+### Probability Salomon finishes 4th place
+```{r}
+(Pr_sal_last <- 1 - Pr_sal_first - Pr_sal_sec - Pr_sal_third)
+```
+
+```{r}
+(salomon_probs <- cbind(Pr_sal_first, Pr_sal_sec, Pr_sal_third, Pr_sal_last))
+```
+
+### 2.4 Answer
+
+So Salomon's expected winnings are $6,460,042
+```{r}
+Pr_sal_first * 10000000 + Pr_sal_sec * 6000000 + Pr_sal_third * 4000000 + Pr_sal_last * 2840000
+```
+
 
 ## Perspectives on Probability
 
