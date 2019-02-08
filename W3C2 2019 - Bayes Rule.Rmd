@@ -1,0 +1,190 @@
+---
+title: "W3C2 2019.2.7 - Bayes Rule"
+author: "Michael Weisner"
+date: "2/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Mapp Biopharmaceutical covers ebola epidemic in Africa. They made a drug to treat ebola. 
+
+What's the probability that this drug would cure a person of ebola?
+
+50%? 
+
+In clinical trials with 21 subjects infected with ebola... 21 out of 21 survived to the end of the study.
+
+How do you update?
+
+75% probability?
+
+Of those 21... 21 out of 21 were monkeys.
+
+Probability of effectiveness?
+
+60%?
+
+21 out of 21 were given the cure and ebola at the same time. But they did another study with monkeys who got the cure 3 day later...
+
+Of the second batch of monkeys, 14/21 survived.
+
+How would we estimate now? 60% still? But they're monkeys so maybe like 55%?
+
+Mode would be most frequent?
+
+Median would be where of the actual likelihood is 50% is lower/higher than our estimate?
+
+## Beta Distribution
+
+- The Beta distribution for $\pi \in \Theta = \left[0,1\right]$ has two positive shape parameters 
+  $a$ and $b$ and its PDF involves the Beta function 
+  $B\left(a,b\right) = \frac{\Gamma\left(a\right) \Gamma\left(b\right)}{\Gamma\left(a + b\right)}$:
+  
+$$
+f\left(\left.\pi\right|a,b\right) = \frac{1}{B\left(a,b\right)} \pi^{a - 1} \left(1 - \pi\right)^{b - 1}
+\propto \pi^{a - 1} \left(1 - \pi\right)^{b - 1}
+$$
+Above has the PDF of the Beta function which is equal to 1 / the normalizing function B(a,b) that is constrained to the PDF condition that PDFs must be equal to 1. Sometimes it's written with $\alpha$ and $\beta$ instead of a & b.
+
+- Its expectation is $\mu = \frac{a}{a + b}$ &
+  mode is $M = \frac{a - 1}{a + b - 2}$ but only exists if $a,b > 1$
+- Its median, $m \approx \frac{a - \frac{1}{3}}{a + b - \frac{2}{3}}$, always exists but 
+  approximation assumes $a,b > 1$
+- Given $M, m \in \left(0,1\right)$, you can [solve](https://www.wolframalpha.com/input/?i=Reduce+function) 
+  for $a > 1$ and $b > 1$
+    - $a = \frac{m\left(4M - 3\right) + M}{3\left(M - m\right)}$ while
+    $b = \frac{m\left(1 - 4M\right) + 5M - 2}{3\left(M - m\right)}$
+    - But $m$ must be between $\frac{1}{2}$ and $M$ in order for $a > 1$ and $b > 1$
+
+Using the Beta as a Prior:
+
+What would be a reasonable distribution for 7 tries? Binomial, because it's 7 independent cases, aka 7 Bernoulli distributions we can sum up.
+
+So we can use a Beta distribution for the unknown, pi, and a Binomial distribution for our likelihood.
+
+So how do we go about obtaining this posterior distribution?
+
+## STAN!
+
+Stan is its own language.
+```{r message = FALSE, results = "hide"}
+rstan::expose_stan_functions("ebola_rng.stan") # puts Stan functions into R's workspace
+M <- 2 / 3; m <- 0.635; a <- (m * (4 * M - 3) + M) / (3 * (M - m)) 
+b <- (m * (1 - 4 * M) + 5 * M - 2) / (3 * (M - m))
+N <- 7L; y <- 5L; S <- 10000L; post <- ebola_rng(S, M, m, N, y) # call as an R function
+```
+
+now plot
+
+```{r}
+plot(post, y = (1:S) / S, type = "l", xlim = 0:1, ylab = "CDF of pi")
+curve(pbeta(pi, a, b), from = 0, to = 1, add = TRUE, col = 2, lty = 2, xname = "pi")
+legend("topleft", legend = c("Posterior", "Prior"), col = 1:2, lty = 1:2)
+```
+
+
+Posterior below Prior indicates less precision and more uncertainty. Posterior more steep is more precision and less uncertainty.
+
+We start with 0.5 probability of survival with no treatment
+
+
+So basically you have to express beliefs in terms of distributions as a means of expressing uncertainty.
+
+Beta distribution with this mode and this median is a complete thought about what you believe about the probability before you see the data.
+
+So learning a distribution is essential for being able to express your beliefs.
+
+## Numerator of Bayes Rule
+
+Beta prior PDF * binomial PDF given M and success probability,
+
+To help with rounding to zero issues we can use log units (remember, always NATURAL log). At the end we can use exp if we want, but basically we use logs to let super small and super big numbers to cancel out before then. 
+
+Look at numerator.stan file
+
+```{r message = FALSE, results = "hide"}
+rstan::expose_stan_functions("numerator.stan")
+```
+
+```{r}
+(denom <- integrate(numerator, lower = 0, upper = 1, M = M, m = m, N = N, y = y)$value)
+```
+
+
+## Same info from PDF
+```{r}
+curve(numerator(pi, M, m, N, y) / denom, from = 0, to = 1, xname = "pi", ylab = "PDF of pi")
+curve(dbeta(pi, a, b), from = 0, to = 1, col = 2, lty = 2, xname = "pi", add = TRUE)
+lines(density(post, from = 0, to = 1),   col = 3, lty = 3)
+legend("topleft", legend = c("Posterior", "Prior", "Approximate"), col = 1:3, lty = 1:3)
+```
+
+## Deriving the Posterior Distribution Analytically
+
+- Survivals are Binomial with probability $\pi$. Thus, BEFORE you see the results
+$f\left(\left.y\right|N,\pi\right)={N \choose y}\pi^{y}\left(1-\pi\right)^{N-y}$
+  while the Beta PDF is again
+  $f\left(\left.\pi\right|a,b\right) = \frac{1}{B\left(a,b\right)} \pi^{a - 1} \left(1 - \pi\right)^{b - 1}$,
+  so $B\left(a,b\right) = \int_0^1 \pi^{a - 1} \left(1 - \pi\right)^{b - 1} d\pi$
+- AFTER $y = 5$ out of $N = 7$ people were cured, what are your beliefs about $\pi$?
+$$f\left(\left.\pi\right|a,b,N,y\right) = \frac{f\left(\left.\pi\right|a,b\right) L\left(\pi;N,y\right)}
+{\int_0^1 f\left(\left.\pi\right|a,b\right) L\left(\pi;N,y\right) d\pi} \propto \\
+\pi^{a - 1} \left(1 - \pi\right)^{b - 1} \pi^{y}\left(1-\pi\right)^{N-y}
+= \pi^{a + y - 1} \left(1 - \pi\right)^{b + N - y - 1} = \pi^{a^\ast - 1} \left(1 - \pi\right)^{b^\ast - 1}$$
+where $a^{\ast}=a+y$ and $b^{\ast}=b+N-y$
+- $f\left(\left.\pi\right|a^\ast,b^\ast\right)$ has the kernel of a Beta PDF and therefore the normalizing constant must be the reciprocal of $B\left(a^\ast,b^\ast\right)$
+
+
+So basically all we have to do is evaluate the Beta function at `a*` (which is a + y) and `b*` (which is b + N -y) to get the PDF at the posterior...
+
+Note: Beta and Binomial are fairly unique in their conjugation.
+
+## Checking the Posterior CDF {.smaller}
+
+```{r, fig.height = 4, fig.width=10, small.mar = TRUE}
+plot(post, y = (1:S) / S, type = "l", xlim = 0:1, xlab = expression(pi), ylab = "CDF of pi")
+curve(pbeta(pi, a, b), from = 0, to = 1, add = TRUE, col = 2, lty = 2, xname = "pi")
+curve(pbeta(pi, a + y, b + N - y), from = 0, to = 1, add = TRUE, col = 3, lty = 3, xname = "pi")
+legend("topleft", legend = c("From draws", "Prior", "Analytical"), col = 1:3, lty = 1:3)
+```
+
+## Checking the Posterior PDF {.smaller}
+
+```{r, fig.height = 3, fig.width=10, small.mar = TRUE}
+c(exact = (a + y) / (a + y + b + N - y), approximate = mean(post)) # posterior expectation
+curve(numerator(pi, M, m, N, y) / denom, from = 0, to = 1, xname = "pi", ylab = "PDF of pi")
+curve(dbeta(pi, a, b), from = 0, to = 1, col = 2, lty = 2, xname = "pi", add = TRUE)
+curve(dbeta(pi, a + y, b + N - y), from = 0, to = 1, col = 3, lty = 3, xname = "pi", add = TRUE)
+legend("topleft", legend = c("Numerical", "Prior", "Analytical"), col = 1:3, lty = 1:3)
+```
+
+Above is the simplest non-trivial case of Bayes' actual theorom, it's been more generalized today, though.
+
+
+## Proerties of this Posterior Distribution
+
++ The first approach illustrates a key point: The posterior PDF is the function closest to the prior PDF that satisfies a constraint given by the observed data
++ Posterior expectation is between the prior expectation and sample mean
++As N↑∞ with a and b fixed, the posterior mean approaches $\frac{y}{N}$
++It does not matter if the data arrives one observation at a time, all at once, or somewhere in between. After N tries and y successes your posterior distribution will be the same, namely Beta with parameters a∗=a+y and b∗=b+N−y, and contains all the information available from past data
++ Ergo, you can use your posterior PDF as your prior PDF for the next dataset
+
+```{r}
+c(prior = a / (a + b), posterior = (a + y) / (a + y + b + N - y), sample = y / N)
+```
+
+Bayesian is GREAT for constantly streaming data, make yesterday's posterior into today's prior!
+
+## Homework
+Open Frame: you can just have it loop through.
+
+BUT 
+
+It doesn't add up to 1, so if you want to do that you need to sum it... That's how you'd make it into CONDITIONAL probability.
+
+
+
+
