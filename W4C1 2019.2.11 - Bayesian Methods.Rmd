@@ -1,0 +1,233 @@
+---
+title: "W4C1 2019.2.11 - Bayesian Methods"
+author: "Michael Weisner"
+date: "2/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Krushke Quotes
+
++ Kruschke is a psychologist
++ "possibilities, over which we allocate credibility, are parameter values in meaningful mathematical models."
++ The possibilities are represented by $\Theta$ and the parameters are $\theta$ in some model for the data-generating process for Y, which leads us to Bayes Rule:
+
+$$
+f\left(\left.\boldsymbol{\theta}\right|\mathbf{y}\right) = 
+\frac{f\left(\boldsymbol{\theta}\right) f\left(\left.\mathbf{y}\right|\boldsymbol{\theta}\right)}{f\left(\mathbf{y}\right)} = 
+\frac{f\left(\boldsymbol{\theta}\right) f\left(\left.\mathbf{y}\right|\boldsymbol{\theta}\right)}{\int_\Theta f\left(\boldsymbol{\theta}\right) f\left(\left.\mathbf{y}\right|\boldsymbol{\theta}\right)d\boldsymbol{\theta}} =
+\frac{f\left(\boldsymbol{\theta},\mathbf{y}\right)}{\int_\Theta f\left(\boldsymbol{\theta},\mathbf{y}\right)
+d\boldsymbol{\theta}}
+$$
++ "Bayesian inference is reallocation of credibility across possibilities after observing new data." (they add up to 1 if they're discrete and they integrate to 1 if they're continuous)
++ Your prior beliefs are represnted by the PDF $f(\theta)$ and then you condition on the avilable data on $y$ to map your prior beliefs into your posterior belifs by multiplying the prior PDF by $\frac{L\left(\boldsymbol{\theta};\mathbf{y}\right)}{f\left(\mathbf{y}\right)}$ to obtain the posterior PDF $f\left(\left.\boldsymbol{\theta}\right|\mathbf{y}\right)$
+
+## Ex Ante Probability Density / Mass Function
+A likelihood function is the same expression as PDF or PMF with 3 distinctions:
+
+1. For PDF or PMF, $f(x|\theta)$, we think of X as a random variable and $\theta$ as given, whereas we conceive of the likelihood functions, $\mathcal{L}\left(\boldsymbol{\theta};x\right)$, to be a function of $\boldsymbol{\theta}$ evaluted at the OBSERVED data, $x$
++ As a consequence, 
+$$
+\int\limits _{-\infty}^{\infty}f\left(\left.x\right|\boldsymbol{\theta}\right)dx=1
+$$
+or 
+$$
+\sum\limits _{i:x_{i}\in\Omega}f\left(\left.x_{i}\right|\boldsymbol{\theta}\right)=1
+$$ 
+while  
+$$
+\int_{-\infty}^{\infty}\int_{-\infty}^{\infty}\cdots\int_{-\infty}^{\infty}\mathcal{L}\left(\boldsymbol{\theta};x\right)d\theta_{1}d\theta_{2}\ldots d\theta_{K}
+$$
+is positive but not 1
+2. We often think of “the likelihood function” for $N$ conditionally independent observations,so 
+$$
+\mathcal{L}\left(\boldsymbol{\theta};\mathbf{x}\right)=\prod _{n=1}^{N}\mathcal{L}\left(\boldsymbol{\theta};x_n\right)
+$$
+3. By “the likelihood function”, we often really mean the natural logrithm thereof, a.k.a. the log-likelihood function 
+$$
+\ell\left(\boldsymbol{\theta};\mathbf{x}\right) = \ln\mathcal{L}\left(\boldsymbol{\theta},\mathbf{x}\right)=\sum_{n=1}^{N}
+\ln\mathcal{L}\left(\boldsymbol{\theta};x_n\right)
+$$
+
+## Bayesian Workflow
+
+1. Classify concepts into Exogenous/Endogenous * Known/Unknowable 
++ Exogenous = Independent variable that affects a model without being affected by it, and whose qualitative characteristics and method of generation are not specified by the model builder. An exogenous variable is used for setting arbitrary external conditions, and not in achieving a more realistic model behavior. For example, the level of government expenditure is exogenous to the theory of income determination. 
++ Endogenous = Dependent variable generated within a model and, therefore, a variable whose value is changed (determined) by one of the functional relationships in that model. For example, consumption expenditure and income is considered endogenous to a model of income determination.
+2. Draw from the prior predictive distribution of your generative model
++ test that your software is working on generated data
++ possibly pre-register your proposed analysis
+3. Obtain new data at least on the Endogenous Knowns
+4. Use Bayes Rule to obtain the posterior distribution of the Unknowables given the Known data. If using Stan this will give warnings you should fix.
+5. Draw from the posterior predictive distribution and compare to the empircal distribution of the endogenous Knowns.
+
+## Generative Models
+
++ In order to draw from prior predictive distribution, you have to have a model that you can simulate from
++ Without a generative model, you cannot update your beliefs with Bayes Rule
+
+Concept        |  Known                                          | Unknowable
+-------------- | ----------------------------------------------- | ----------
+__Exogenous__  | sizes, predictors, prior modes / medians / etc. | parameters
+__Endogenous__ | outcomes                                        | intermediate params, predictions of future, utility
+
+- __Endogenous Known__: Count of people $\left(Y\right)$ in residences
+- __Exogenous Unknowable__ : Expected number $\left(\mu\right)$ of people in a residence
+- __Exogenous Known__: Number of residences, prior mode and mean for $\mu$
+- __Endogenous Unknowable__ : Predicted number in a future residence
+- Still need to choose distributions for $\mu$ and $\left.Y\right|\mu$
+
+## Prior Predictive Distribution
+
++ Drawing from the prior predictive distribution of a generative model is a good way to check that the (prior) probability distribution for the exogenous unknowables is generates reasonable looking outcomes
++ Drawing from the prior predictive distribution is also a good way to confirm that your software is working well before you try it with observed data.
+
+**So let's use the Poisson distribution with unknowable parameter $\mu$ to predict the outcome (a count of the number of people in a residence)**
+
+There's technically no limit on the number of people who can live under one roof (though there are some laws) so we leave it as an unbounded parameter. Poisson has a low expected $\mu$ value so it might work okay (since we expect under 10 people per hour probably)
+
+**How would we write the log-probability of observing N Poisson independent random variables with expectation $\mu$?**
+
+**Guesses:**
+
++ sum the logs of the PMF of the Poisson?
+
+**Answer:**
+$$
+\prod_{n=1}^N \frac{e^{-\mu}\mu^{y_n}}{y_n!} = e^{-N\mu} \mu^{\sum_{n=1}^N y_n} \prod_{n=1}^N \frac{1}{y_n!}
+$$ 
+
+so
+    $$
+    \ln\prod_{n=1}^N \frac{e^{-\mu}\mu^{y_n}}{y_n!} = -N\mu + \left(\sum_{n=1}^N y_n\right)\ln \mu - \sum_{n=1}^N\ln\left(y_n!\right)
+    $$
++ But we need a prior distribution to draw realizations of $\widetilde{\mu}$ from
+
+A sum of the logs is the sum of the logs of its parts. 
+
+
+## Gamma Distribtuion
+
+If our sample space is all real numbers ($\Theta = \mathbb{R}$) and $a > 0$, the PDF of th e"Unit" Gamma distribtuion is 
+$$
+f\left(\left.\theta\right|a\right) = \frac{1}{\Gamma\left(a\right)} \theta^{a - 1} e^{-\theta}
+$$
+
+What is an expression for $\Gamma\left(a\right)$?
+
+**Answer**
+
+We know that because it's a PDF, then it has to integrate to 1.
+
+$$
+\int_{0}^{\infty}(\frac{1}{\Gamma\left(a\right)}) = 1
+$$
+
+Suppose $\mu = \frac {\theta}{b$, with $b > 0$ what is the PDF of $\mu$?
+
+Chain rule!
+
+If $\Theta = b\mu$ so $\frac{\partial \theta}{\partial \mu} = b$ and
+$$
+f\left(\left.\mu\right|a,b\right) = \frac{b}{\Gamma\left(a\right)} \left(b\mu\right)^{a - 1} e^{-b \mu} =
+\frac{b^a}{\Gamma\left(a\right)} \mu^{a - 1} e^{-b \mu}
+$$
+
+**NOTE:**
+TWO STEPS!
+
+1. Figure out how to express what you know, in this case $\theta$ in terms of what you're looking for $\mu$ and then 
+2. Do the substitution and multiply by the derivative of that inverse distribution....
+
+The expectation of a gamma distribution is 
+$$\mathbb{E}\mu = \frac{a}{b}$$
+
+The Mode of a gamma distribution, provided $a > 1$, is
+$$M = \frac{a - 1}{b}$$
+
+**ISSUE**
+If prior mode is 4.2, the distribution skews towards larger than it?
+
+What should $M$ and $\mathbb{E}\mu$ be for the residences example? What are $a$ and $b$?
+
+Solve for b
+$$
+M = \frac{a-1} {b} = \mathbb{E} \mu - \frac {1}{b}
+$$
+Which is...
+
+$$
+b = \frac {1}{\mathbb{E}\mu - M}
+$$
+
+Solve for a
+$$
+b\mathbb{E}\mu
+$$
+
+## Matching the Prior Predictive Distributions in Stan
+Let's do what we did with the ebola example. Draws random sample of residence. 
+
+```{r, echo = FALSE, comment=""}
+cat(readLines("residences_rng.stan"), sep = "\n")
+```
+
+Above draws but only keeps draws that satisfy things, which, in this case, is if the sum of the predictions matches the sum of the posterior outcomes(?) CLARIFICATION: Draw ten houses, count them up, then simulate ten houses, count them up, if they match the drawn houses, keep them as a "good" sample.
+
+## Posterior vs. Prior CDF
+
+```{r, small.mar = TRUE, fig.height=4, fig.width=10}
+rstan::expose_stan_functions("residences_rng.stan")
+M <- 2.5; Emu <- 2.7; b <- 1 / (Emu - M); a <- Emu * b
+y <- c(3, 1, 0, 2, 2, 4, 1, 3, 2, 1); S <- 10000; post <- residences_rng(S, M, Emu, y) # 10K simulations
+plot(post, (1:S) / S, type = "l", xlim = c(0, 5), ylab = "CDF of mu")
+curve(pgamma(mu, a, b), lty = 2, col = 2, add = TRUE, xname = "mu")
+legend("topleft", legend = c("Posterior", "Prior"), lty = 1:2, col = 1:2, bg = "lightgrey")
+```
+
+## Posterior Kernel in Stan
+
+```{r, echo = FALSE, comment=""}
+cat(readLines("kernel.stan"), sep = "\n")
+```
+```{r echo = FALSE, comment = ""}
+rstan::expose_stan_functions("kernel.stan")
+(denom <- integrate(kernel, lower = 0, upper = Inf, M = M, Emu = Emu, y = y)$value)
+```
+
+## Analytical Posterior PDF
+
+- Gamma prior PDF is again $\color{red}{f\left(\left.\mu\right|a,b\right) = \frac{b^a}{\Gamma\left(a\right)} \mu^{a - 1} e^{-b \mu}}$
+- Poisson PMF for $N$ observations is again $\color{blue}{f\left(\left.y_1,\dots,y_n\right|\mu\right) = e^{-N\mu} \mu^{\sum_{n=1}^N y_n} \prod_{n=1}^N \frac{1}{y_n!}}$
+
+> - Posterior PDF, $\color{purple}{f\left(\left.\mu\right|a,b,y_1,\dots,y_n\right)}$, 
+is proportional to their product:
+$$
+\color{blue}{\mu^{a - 1} e^{-b \mu}} \color{red}{\mu^{\sum_{n=1}^N y_n} e^{-N\mu}} = 
+\color{purple}{\mu^{a - 1 + \sum_{n=1}^N y_n} e^{-\left(b + N\right)\mu} = 
+\mu^{a^\ast - 1} e^{-b^\ast \mu}},
+$$ 
+where $a^\ast = a + \sum_{n=1}^N y_n$ and 
+$b^\ast = b + N$
+> - Ergo, the posterior has a Gamma kernel and the normalizing constant is
+$\frac{\left(b^\ast\right)^{a^\ast}}{\Gamma\left(a^\ast\right)}$
+
+## Posterior vs. Prior PDF
+
+```{r, small.mar = TRUE, fig.height=3.5, fig.width=10}
+curve(kernel(mu, M, Emu, y) / denom, from = 0, to = 5, ylab = "PDF of mu", xname = "mu")
+curve(dgamma(mu, a, b), lty = 2, col = 2, add = TRUE, xname = "mu")
+curve(dgamma(mu, a + sum(y), b + length(y)), lty = 3, col = 3, add = TRUE, xname = "mu")
+lines(density(post, from = 0, to = 5), lty = 4, col = 4)
+legend("topleft", legend = c("Posterior", "Prior", "Analytical", "Approximate"), 
+       lty = 1:4, col = 1:4, bg = "lightgrey")
+```
+
+
+
+
+
+
