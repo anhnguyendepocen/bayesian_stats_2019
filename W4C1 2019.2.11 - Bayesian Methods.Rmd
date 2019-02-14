@@ -190,6 +190,8 @@ legend("topleft", legend = c("Posterior", "Prior"), lty = 1:2, col = 1:2, bg = "
 
 ## Posterior Kernel in Stan
 
+A kernel distribution is a nonparametric representation of the probability density function (pdf) of a random variable. You can use a kernel distribution when a parametric distribution cannot properly describe the data, or when you want to avoid making assumptions about the distribution of the data.
+
 ```{r, echo = FALSE, comment=""}
 cat(readLines("kernel.stan"), sep = "\n")
 ```
@@ -202,17 +204,14 @@ rstan::expose_stan_functions("kernel.stan")
 
 - Gamma prior PDF is again $\color{red}{f\left(\left.\mu\right|a,b\right) = \frac{b^a}{\Gamma\left(a\right)} \mu^{a - 1} e^{-b \mu}}$
 - Poisson PMF for $N$ observations is again $\color{blue}{f\left(\left.y_1,\dots,y_n\right|\mu\right) = e^{-N\mu} \mu^{\sum_{n=1}^N y_n} \prod_{n=1}^N \frac{1}{y_n!}}$
-
-> - Posterior PDF, $\color{purple}{f\left(\left.\mu\right|a,b,y_1,\dots,y_n\right)}$, 
-is proportional to their product:
+- Posterior PDF, $\color{purple}{f\left(\left.\mu\right|a,b,y_1,\dots,y_n\right)}$, is proportional to their product:
 $$
 \color{blue}{\mu^{a - 1} e^{-b \mu}} \color{red}{\mu^{\sum_{n=1}^N y_n} e^{-N\mu}} = 
 \color{purple}{\mu^{a - 1 + \sum_{n=1}^N y_n} e^{-\left(b + N\right)\mu} = 
 \mu^{a^\ast - 1} e^{-b^\ast \mu}},
 $$ 
-where $a^\ast = a + \sum_{n=1}^N y_n$ and 
-$b^\ast = b + N$
-> - Ergo, the posterior has a Gamma kernel and the normalizing constant is
+where $a^\ast = a + \sum_{n=1}^N y_n$ and $b^\ast = b + N$
+- Ergo, the posterior has a Gamma kernel and the normalizing constant is
 $\frac{\left(b^\ast\right)^{a^\ast}}{\Gamma\left(a^\ast\right)}$
 
 ## Posterior vs. Prior PDF
@@ -226,8 +225,28 @@ legend("topleft", legend = c("Posterior", "Prior", "Analytical", "Approximate"),
        lty = 1:4, col = 1:4, bg = "lightgrey")
 ```
 
+So how would we describe this? We can expect houses to have about 2 people? How did we inform our beliefs before we saw the data? The distribution we assumed, aka the poisson distribution, which is convenient because it's over integer random variables. 
 
+So how can we use poisson to determine how many people might live in a random apartment?
 
+Draw random samples?
+
+"What do you believe" is rarely a number, it's always a distribution or function. So we would say a random apartment probably has between 1-4 people living in it. That's not a number.
+
+If you want a PDF for a FUTURE outcome we use the POsterior Predictive Distribution
+
+### Drawing from a Posterior Predictive Distribution
+
+Basically keep track of your uncertainty and propogate it through functions of random variables. 
+
+We don't know $\mu$, the number of people in a random apartment, but we can know the distribution of $\mu$ to create a probability distribution based on our prior observations.
+
+## Drawing from a Posterior Predictive Distribution
+  
+```{r, small.mar = TRUE}
+y_tilde <- rpois(S, post) # R functions that generate random numbers start with r
+barplot(prop.table(table(y_tilde)), ylab = "Posterior Predictive Probability")
+```
 
 
 
